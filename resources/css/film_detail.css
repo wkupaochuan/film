@@ -1,0 +1,187 @@
+#content {
+    min-height: 420px;
+}
+
+.top250 {
+    background: url('/resources/css/img/top250_bg.png') no-repeat;
+    width: 150px;
+    font: 12px Helvetica,Arial,sans-serif;
+    margin: 5px 0;
+    color: #744900;
+}
+
+.top250 span {
+    display: inline-block;
+    text-align: center;
+    height: 18px;
+    line-height: 18px;
+}
+
+.top250-no {
+    width: 34%;
+}
+
+.top250-link {
+    width: 66%;
+}
+
+h1 {
+    word-wrap: break-word;
+    display: block;
+    font-size: 25px;
+    font-weight: bold;
+    color: #494949;
+    margin: 0;
+    padding: 0 0 15px 0;
+    line-height: 1.1;
+}
+
+.year {
+    display: inline-block;
+    zoom: 1;
+}
+
+.grid-16-8 .article {
+    float: left;
+    width: 590px;
+    padding-right: 40px;
+}
+
+.clearfix {
+    display: block;
+}
+
+.subject {
+    float: left;
+    width: 415px;
+}
+.indent {
+    margin-bottom: 30px;
+}
+
+.subjectwrap {
+    position: none;
+    float: none;
+    width: auto;
+}
+
+#mainpic {
+    margin: 3px 0 0 0;
+    float: left;
+    text-align: center;
+    margin: 3px 12px 0 0;
+    max-width: 155px;
+    overflow: hidden;
+}
+
+#info {
+    float: left;
+    max-width: 248px;
+    word-wrap: break-word;
+}
+
+.related-info {
+    display: block;
+}
+
+.indent {
+    margin-bottom: 30px;
+}
+
+.related-pic {
+    margin-bottom: 30px;
+}
+
+.related-pic-bd {
+    margin-right: -3px;
+    overflow: hidden;
+    letter-spacing: -0.31em;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.related-pic-bd li {
+    display: inline-block;
+    vertical-align: top;
+    letter-spacing: normal;
+    margin-right: 25px;
+}
+
+.film_rel_pic {
+    border-width: 0;
+    width: 100px;
+    height: 100px;
+    vertical-align: middle;
+    max-width: 100%;
+}
+
+.mod {
+    margin-bottom: 25px;
+}
+
+.mod .hd {
+    margin-bottom: 10px;
+}
+
+
+ul.award {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.award li {
+    display: inline;
+    margin-right: 5px;
+}
+
+#recommendations .recommendations-bd {
+    margin-right: -18px;
+    letter-spacing: -0.31em;
+}
+
+#recommendations .recommendations-bd dl {
+    display: inline-block;
+    vertical-align: top;
+    letter-spacing: normal;
+    word-spacing: normal;
+    letter-spacing: normal;
+    margin: 0 18px 15px 0;
+    overflow: hidden;
+}
+
+#recommendations .recommendations-bd dt {
+    height: 145px;
+    width: 100px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+a img {
+    border-width: 0;
+    vertical-align: middle;
+    max-width: 100%;
+}
+
+#recommendations .recommendations-bd dd {
+    font-size: 13px;
+    text-align: center;
+}
+
+.review_user {
+    margin: 0;
+    padding: 0 0 0 10px;
+    line-height: 28px;
+    height: 28px;
+    background-color: rgba(240,243,245,0.8);
+}
+
+.review_content {
+    overflow: hidden;
+    word-break: break-word;
+    margin: 0;
+}
