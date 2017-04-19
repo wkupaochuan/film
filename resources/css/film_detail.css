@@ -185,3 +185,70 @@ a img {
     word-break: break-word;
     margin: 0;
 }
+
+ul.downurl {
+    list-style: none;
+    border-bottom: 1px solid #eaeaea;
+    /* padding-bottom: 12px; */
+    padding: 0 10px 23px;
+    overflow: hidden;
+    zoom: 1;
+}
+
+ul.downurl li {
+    /* line-height: 34px; */
+    overflow: hidden;
+    /* padding: 0 10px; */
+    border-bottom: 0px solid #eaeaea;
+    vertical-align: middle;
+    width: 100%;
+    float: left;
+    height: 44px;
+    padding: 3px 0;
+    margin-left: 0px;
+}
+
+ul.downurl li .loldytt {
+    /* line-height: 26px; */
+    width: 792px;
+    /* margin: 6px 0px 10px 0px; */
+    line-height: 24px;
+    color: #738d9e;
+}
+
+ul.downurl li .dwon_xl {
+    width: 80px;
+    height: 35px;
+    /* padding-top: 6px; */
+    padding-left: 12px;
+}
+
+ul.downurl li div {
+    float: left;
+    display: inline;
+    overflow: hidden;
+    padding-top: 10px;
+    height: 45px;
+}
+
+ul.downurl li .loldytt div span {
+    color: #bc2931;
+    overflow: hidden;
+    float: left;
+    height: 24px;
+    padding-right: 0px;
+    /* width: 162px; */
+    display: inline;
+}
+
+ul.downurl li .loldytt div input {
+    font-size: 12px;
+    border: 1px solid #e4e4e4;
+    /* float: left; */
+    padding: 0px 0px 0px 6px;
+    height: 22px;
+    line-height: 22px;
+    color: #000;
+    background: #f2f2f2;
+    margin: 0px 0px 0px 10px;
+}

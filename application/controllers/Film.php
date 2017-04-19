@@ -33,6 +33,7 @@ class Film extends MY_Controller {
 		$id = $this->input->get('id');
 		$this->load->model('Film_model');
 		$this->load->model('Film_pic_model');
+		$this->load->model('Film_bt_model');
 		$film_detail = $this->Film_model->get_detail_by_id($id);
 
 		if(!empty($film_detail)) {
@@ -44,6 +45,25 @@ class Film extends MY_Controller {
 			if(!empty($film_detail['recom_douban_id'])) {
 				$film_detail['recom_films'] = $this->Film_model->get_by_douban_ids(explode(',', $film_detail['recom_douban_id']));
 			}
+
+			$bts = $this->Film_bt_model->get_by_douban_id($film_detail['douban_id']);
+			$sorted_bts = array(
+				'thunder' => array(),
+				'bt' => array(),
+				'mag' => array(),
+			);
+			if(!empty($bts)){
+				foreach($bts as $tmp){
+					if($tmp['type'] == 1){
+						array_push($sorted_bts['thunder'], $tmp);
+					}else if($tmp['type'] == 2){
+						array_push($sorted_bts['bt'], $tmp);
+					}else if($tmp['type'] == 3){
+						array_push($sorted_bts['mag'], $tmp);
+					}
+				}
+			}
+			$film_detail['bt'] = $sorted_bts;
 		}
 
 		$this->assign('data', array(

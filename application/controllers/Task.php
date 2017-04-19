@@ -447,7 +447,7 @@ class Task extends MY_Controller {
 		if(strpos($down_pic_url, 'ipst') !== false || strpos($down_pic_url, 'lpst') !== false ){
 			$b_down_pic_url = str_replace('ipst', 'lpst', $down_pic_url);
 			$l_down_pic_url = str_replace('lpst', 'ipst', $down_pic_url);
-		}else if(strpos($down_pic_url, 'lpic') !== false || strpos($down_pic_url, 'ipic') !== false){
+		}else if(strpos($down_pic_url, 'lpic') !== false || strpos($down_pic_url, 'spic') !== false){
 			$b_down_pic_url = str_replace('spic', 'lpic', $down_pic_url);
 			$l_down_pic_url = str_replace('lpic', 'spic', $down_pic_url);
 		}
