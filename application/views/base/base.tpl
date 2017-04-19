@@ -16,6 +16,17 @@
 
     <!-- Bootstrap -->
     <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    {literal}
+    <script language="JavaScript" type="text/javascript">
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?bb663b6933fc393d2ae8876018a3ba0d";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    {/literal}
 </head>
 
 <body>
