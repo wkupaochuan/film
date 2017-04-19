@@ -3,6 +3,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Task extends MY_Controller {
 
+	/**
+	 * 修正db里面错误的豆瓣封面
+	 */
 	public function modify_douban_post_covers(){
 		$page = 1;
 		$limit = 200;
@@ -74,7 +77,7 @@ class Task extends MY_Controller {
 		$this->load->model('Film_bt_model');
 
 		$i = 0;
-		$start = 1;
+		$start = 0;
 		$find_none = $find_one = $find_multi = 0;
 		while(!feof($rfp)) {
 			if($i++ > 1000000) {
@@ -94,41 +97,64 @@ class Task extends MY_Controller {
 			}
 
 			if(!empty($data['name'])) {
-				$query_res = $this->Film_model->query_by_name($data['name']);
-				if(empty($query_res)){
+				$actor_search = '';
+				if(!empty($data['actors'])){
+					$actors = explode('：', $data['actors']);
+					if(count($actors) == 2){
+						$actors = explode(' ', $actors[1]);
+						if(!empty($actors)) {
+							foreach($actors as $tmp){
+								if(!empty($tmp)) {
+									$actor_search = $tmp;
+									break;
+								}
+							}
+						}
+					}
+				}
+				$query_res = $this->_search_unique_film_by_name_actor($data['name'], $actor_search);
+				if(empty($query_res['count'])){
 					$find_none++;
+					echo 'none : ' . $data['name'] . ':' . $actor_search . PHP_EOL;
 					$data['find_count'] = 0;
 					fputs($wfp, json_encode($data) . PHP_EOL);
-				}else if(count($query_res) == 1){
+				}else if($query_res['count'] == 1){
 					$find_one++;
+					$query_film = $query_res['film_detail'];
+					$insert_bts_array = array();
 					foreach($data['thunder'] as $bt){
-						$insert_data = array(
+						array_push($insert_bts_array, array(
+							'douban_id' => $query_film['douban_id'],
 							'type' => 1,
 							'url' => $bt['link'],
 							'name' => $bt['title'],
-						);
-						$this->Film_bt_model->insert($insert_data);
+						));
 					}
 					foreach($data['bt'] as $bt){
-						$insert_data = array(
+						array_push($insert_bts_array, array(
+							'douban_id' => $query_film['douban_id'],
 							'type' => 2,
 							'url' => $bt['link'],
 							'name' => $bt['title'],
-						);
-						$this->Film_bt_model->insert($insert_data);
+						));
 					}
 					foreach($data['magnet'] as $bt){
-						$insert_data = array(
+						array_push($insert_bts_array, array(
+							'douban_id' => $query_film['douban_id'],
 							'type' => 3,
 							'url' => $bt['link'],
 							'name' => $bt['title'],
-						);
-						$this->Film_bt_model->insert($insert_data);
+						));
 					}
-					$this->Film_model->update_loldytt_info($query_res[0]['id'], $data);
+					if(!empty($insert_bts_array)){
+						$this->Film_bt_model->insert_batch($insert_bts_array);
+						$this->Film_model->update_loldytt_info($query_res['film_detail']['id'], $data);
+						echo 'success : ' . $query_res['film_detail']['douban_id'] . PHP_EOL;
+					}
 				}else {
 					$find_multi++;
-					$data['find_count'] = count($query_res);
+					echo 'multi : ' . $data['name'] . ':' . $actor_search . PHP_EOL;
+					$data['find_count'] = $query_res['count'];
 					fputs($wfp, json_encode($data) . PHP_EOL);
 				}
 			}
@@ -136,7 +162,7 @@ class Task extends MY_Controller {
 
 		fclose($rfp);
 		fclose($wfp);
-		echo $find_none . '-' . $find_one . '-' . $find_multi;
+		echo $find_none . '-' . $find_one . '-' . $find_multi . PHP_EOL;
 	}
 
 	/**
@@ -388,9 +414,55 @@ class Task extends MY_Controller {
 		}
 	}
 
-
-
 	/************************************************* private methods *************************************************************/
+
+	private function _search_unique_film_by_name_actor($name, $actor){
+		$res = array(
+			'count' => 0,
+			'film_detail' => array()
+		);
+
+		if(strpos($name, '/') !== false){
+
+			$name = substr($name, 0, stripos($name, '/'));
+		}
+		if(strpos($name, '(') !== false){
+
+			$name = substr($name, 0, stripos($name, '('));
+		}
+
+		$this->load->Model('Film_name_model');
+		$this->load->Model('Film_model');
+		$query_res = $this->Film_name_model->search_by_name($name);
+		if(empty($query_res)) {
+			$pattern = '#[\s\S]*[\d]#U';
+			preg_match($pattern, $name, $matches);
+			if(!empty($matches) && !empty($matches[0])){
+				$query_res = $this->Film_name_model->search_by_name($matches[0]);
+			}
+		}
+		if(count($query_res) == 0){
+			return $res;
+		}else if(count($query_res) == 1) {
+			$res['count'] = 1;
+			$res['film_detail'] = $this->Film_model->get_by_douban_id($query_res[0]['douban_id']);
+		}else{
+			$douban_ids = array();
+			foreach($query_res as $tmp){
+				array_push($douban_ids, $tmp['douban_id']);
+			}
+			$query_res = $this->Film_model->query_by_actors_and_douban_id($douban_ids, $actor);
+			if(count($query_res) == 1) {
+				$res['count'] = 1;
+				$res['film_detail'] = $query_res[0];
+			}else{
+				$res['count'] = count($query_res);
+			}
+		}
+
+		return $res;
+	}
+
 	/**
 	 * 爬取豆瓣详情页
 	 * @param $douban_id

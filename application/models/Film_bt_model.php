@@ -11,4 +11,9 @@ class Film_bt_model extends CI_Model {
 		$this->db->insert('film_bts', $bt);
 	}
 
+	function insert_batch($bt)
+	{
+		$this->db->insert_batch('film_bts', $bt);
+	}
+
 }
