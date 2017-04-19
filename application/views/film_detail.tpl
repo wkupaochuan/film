@@ -7,7 +7,13 @@
 		<!--简介-->
 		<div class="indent subjectwrap subject clearfix">
 			<div id="mainpic" class="">
-				<img style="max-width: 100%" src="{$data.film_detail.douban_post_cover}" title="点击看更多海报" alt="The Pursuit of Happyness" rel="v:image" />
+				{if $data.film_detail.b_post_cover ne ''}
+					<img style="max-width: 100%" src="{$PIC_HOST}{$data.film_detail.b_post_cover}" />
+				{elseif $data.film_detail.l_post_cover ne ''}
+					<img style="max-width: 100%" src="{$PIC_HOST}{$data.film_detail.l_post_cover}" />
+				{else}
+					<img style="max-width: 100%" src="{$data.film_detail.douban_post_cover}" />
+				{/if}
 			</div>
 			<div id="info" class="">
 				<span ><span class='pl'>导演</span>: <span class='attrs'>{$data.film_detail.director}</span></span><br/>
@@ -45,7 +51,7 @@
 				<ul class="related-pic-bd">
 					{foreach from=$data.film_detail.related_pics item=pic}
 						<li>
-							<img class="film_rel_pic" src="http://7u2gfc.com1.z0.glb.clouddn.com/{$pic.file_name}" />
+							<img class="film_rel_pic" src="{$PIC_HOST}{$pic.file_name}" />
 						</li>
 					{/foreach}
 				</ul>
@@ -91,7 +97,13 @@
 						<dl >
 							<dt>
 								<a href="/film/detail?id={$recom_film.id}');" >
-									<img src="{$recom_film.douban_post_cover}" alt="{$recom_film.ch_name}" class="" />
+									{if $recom_film.b_post_cover ne ''}
+										<img style="max-width: 100%" src="{$PIC_HOST}{$recom_film.b_post_cover}" />
+									{elseif $recom_film.l_post_cover ne ''}
+										<img style="max-width: 100%" src="{$PIC_HOST}{$recom_film.l_post_cover}" />
+									{else}
+										<img style="max-width: 100%" src="{$recom_film.douban_post_cover}" />
+									{/if}
 								</a>
 							</dt>
 							<dd>

@@ -101,4 +101,11 @@ class Film_model extends CI_Model {
 		return $query->result_array();
 	}
 
+	public function update_by_douban_id($douban_id, $update_info){
+		$where = array(
+			'douban_id' => $douban_id
+		);
+		$this->db->update($this->_table, $update_info, $where);
+	}
+
 }

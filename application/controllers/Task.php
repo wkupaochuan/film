@@ -3,6 +3,33 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Task extends MY_Controller {
 
+	public function update_post_covers(){
+		$page = 1;
+		$limit = 30;
+		$this->load->model('Film_model');
+		while($page < 1){
+			sleep(1);
+			$films = $this->Film_model->get($page++ * $limit, $limit);
+			if(empty($films)){
+				break;
+			}
+
+			foreach($films as $film){
+				if(empty($film['l_post_cover']) || empty($film['b_post_cover'])){
+					if(!empty($film['douban_post_cover'])){
+						if($this->_update_post_cover($film['douban_id'], $film['douban_post_cover'])){
+							echo 'success:' . $film['douban_id'] . PHP_EOL;
+						}else{
+							echo 'fail:' . $film['douban_id'] . PHP_EOL;
+						}
+					}else{
+						$this->log_error('empty douban post cover:' . $film['douban_id']);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * 修正db里面错误的豆瓣封面
 	 */
@@ -399,23 +426,79 @@ class Task extends MY_Controller {
 		return $ret;
 	}
 
-	private function _update_post_cover($douban_id, $douban_post_cover_link)
-	{
-		if(empty($douban_id) || emtpy($douban_post_cover_link)){
-			return;
-		}
-		$down_pic_url = str_replace('https', 'http', $douban_post_cover_link);
-		$down_pic_file_name = substr($douban_post_cover_link, strrpos($douban_post_cover_link, '/') + 1);
-		$down_pic_file_full_path = '/tmp/' . $down_pic_file_name;
-		$cmd = "wget -q {$down_pic_url} -O $down_pic_file_full_path";
-		exec($cmd);
-		if(file_exists($down_pic_file_full_path)) {
-			$this->Film_pic_model->update_file_name($tmp['id'], $down_pic_file_name);
-		}
-	}
 
 	/************************************************* private methods *************************************************************/
 
+		/**
+		 * 更新封面(下载、上传、更新db)
+		 * @param $douban_id
+		 * @param $douban_post_cover_link
+		 * @return bool|void
+		 */
+	private function _update_post_cover($douban_id, $douban_post_cover_link)
+	{
+		if(empty($douban_id) || empty($douban_post_cover_link)){
+			return false;
+		}
+		$down_pic_url = str_replace('https', 'http', $douban_post_cover_link);
+		$down_pic_file_name = substr($douban_post_cover_link, strrpos($douban_post_cover_link, '/') + 1);
+
+		$b_down_pic_url = $l_down_pic_url  = '';
+		if(strpos($down_pic_url, 'ipst') !== false || strpos($down_pic_url, 'lpst') !== false ){
+			$b_down_pic_url = str_replace('ipst', 'lpst', $down_pic_url);
+			$l_down_pic_url = str_replace('lpst', 'ipst', $down_pic_url);
+		}else if(strpos($down_pic_url, 'lpic') !== false || strpos($down_pic_url, 'ipic') !== false){
+			$b_down_pic_url = str_replace('spic', 'lpic', $down_pic_url);
+			$l_down_pic_url = str_replace('lpic', 'spic', $down_pic_url);
+		}
+
+		if(!empty($b_down_pic_url)){
+			$pending_down_content = array(
+				array(
+					'type' => 1,
+					'url' => $b_down_pic_url,
+					'file_name' => 'pcl_' . $down_pic_file_name,
+				),
+				array(
+					'type' => 2,
+					'url' => $l_down_pic_url,
+					'file_name' => 'pci_' . $down_pic_file_name,
+				)
+			);
+
+			foreach($pending_down_content as $tmp){
+				$down_pic_url = $tmp['url'];
+				$down_pic_file_full_path = '/tmp/' . $tmp['file_name'];
+				$cmd = "wget -q {$down_pic_url} -O $down_pic_file_full_path";
+				exec($cmd);
+				if(file_exists($down_pic_file_full_path) && filesize($down_pic_file_full_path) > 10) {
+					// 上传
+					if($this->qiniu->upload($down_pic_file_full_path, $tmp['file_name'])){
+						$update_info = $tmp['type'] == 1?  array('b_post_cover' => $tmp['file_name'],):array('l_post_cover' => $tmp['file_name'],);
+						$this->Film_model->update_by_douban_id($douban_id, $update_info);
+					}else{
+						$this->log_error('upload fail:' . $douban_id);
+					}
+					@unlink($down_pic_file_full_path);
+				}else{
+					$this->log_error('download fail:' . $douban_id);
+				}
+			}
+
+			return true;
+		}else{
+			$this->log_error('ilegal url:' . $douban_id . ';' . $douban_post_cover_link);
+			return false;
+		}
+	}
+
+
+	/**
+	 * 根据名称和演员查询唯一的电影详情
+	 * @param $name
+	 * @param $actor
+	 * @return array
+	 */
 	private function _search_unique_film_by_name_actor($name, $actor){
 		$res = array(
 			'count' => 0,
@@ -716,6 +799,11 @@ class Task extends MY_Controller {
 		$this->c_echo('user error :on function ' . $function . ' line ' . $line . ':' . $msg);
 	}
 
+	/**
+	 * 带cookie的请求豆瓣
+	 * @param $url
+	 * @return mixed|string
+	 */
 	private function _request_douban($url){
 		$cookie_file_path = './douban_cookie.txt';
 		$cookie_ttl_file_path = './douban_cookie_ttl.txt';

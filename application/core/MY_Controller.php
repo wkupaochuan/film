@@ -9,6 +9,7 @@ class MY_Controller extends CI_Controller {
 	}
 
 	public function display($html) {
+		$this->cismarty->assign('PIC_HOST', $this->config->item('PIC_HOST'));
 		$this->cismarty->assign('content_html',$html);
 		$this->cismarty->display('base/base.tpl');
 	}
