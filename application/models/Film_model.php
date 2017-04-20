@@ -1,10 +1,9 @@
 <?php
-class Film_model extends CI_Model {
+class Film_model extends MY_Model {
 	private $_table = 'film';
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->database();
 	}
 
 	public function query_by_name($search_words)
@@ -17,6 +16,7 @@ class Film_model extends CI_Model {
 	function insert($film)
 	{
 		$this->db->insert('film', $film);
+		return $this->db->affected_rows();
 	}
 
 	function get_by_douban_ids($douban_ids)

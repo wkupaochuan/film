@@ -1,10 +1,10 @@
 <?php
-class Film_pic_model extends CI_Model {
+class Film_pic_model extends MY_Model {
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->database();
 	}
+
 	function insert($pic)
 	{
 		$this->db->insert('film_pic', $pic);

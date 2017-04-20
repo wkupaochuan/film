@@ -1,11 +1,10 @@
 <?php
-class Film_name_model extends CI_Model {
+class Film_name_model extends MY_Model {
 	private $_table = 'film_names';
 
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->database();
 	}
 
 	function insert_batch($names)
