@@ -108,4 +108,15 @@ class Film_model extends MY_Model {
 		$this->db->update($this->_table, $update_info, $where);
 	}
 
+	public function get_recom_films($douban_id){
+		$douban_id = intval($douban_id);
+		$sql = <<<SQL
+			select * from film where douban_id IN (
+				select recom_douban_id from film_recom where douban_id = {$douban_id}
+			);
+SQL;
+
+		$query = $this->db->query($sql);
+		return $query->result_array();
+	}
 }

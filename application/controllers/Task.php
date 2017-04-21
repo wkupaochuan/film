@@ -2,124 +2,30 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Task extends MY_Controller {
+	public function test($id){
+		$this->_request_douban("https://movie.douban.com/subject/{$id}/");
+	}
 
 	public function craw_douban_films_by_db_recom_ids(){
 		$page = 0;
-		$limit = 30;
-		$this->load->model('Film_model');
-		while($page < 10){
-			$films = $this->Film_model->get($page++ * $limit, $limit);
-			if(empty($films)){
-				break;
-			}
-
-			foreach($films as $film){
-				if(!empty($film['recom_douban_id'])){
-					$recom_douban_id_array = explode(',', $film['recom_douban_id']);
-					$exist_douban_ids = array();
-					if(!empty($exist_films = $this->Film_model->get_by_douban_ids($recom_douban_id_array))) {
-						foreach($exist_films as $tmp){
-							array_push($exist_douban_ids, $tmp['douban_id']);
-						}
-					}
-					foreach($recom_douban_id_array as $douban_id){
-						if(!in_array($douban_id, $exist_douban_ids)) {
-							echo 'no exist:' . $douban_id.PHP_EOL;
-							$this->_craw_and_store_douban_film($douban_id);
-							echo 'success:' . $douban_id.PHP_EOL;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	public function update_post_covers(){
-		$page = 1;
-		$limit = 30;
-		$this->load->model('Film_model');
-		while($page < 1){
-			sleep(1);
-			$films = $this->Film_model->get($page++ * $limit, $limit);
-			if(empty($films)){
-				break;
-			}
-
-			foreach($films as $film){
-				if(empty($film['l_post_cover']) || empty($film['b_post_cover'])){
-					if(!empty($film['douban_post_cover'])){
-						if($this->_update_post_cover($film['douban_id'], $film['douban_post_cover'])){
-							echo 'success:' . $film['douban_id'] . PHP_EOL;
-						}else{
-							echo 'fail:' . $film['douban_id'] . PHP_EOL;
-						}
-					}else{
-						$this->log_error('empty douban post cover:' . $film['douban_id']);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * 修正db里面错误的豆瓣封面
-	 */
-	public function modify_douban_post_covers(){
-		$page = 1;
-		$limit = 200;
-		$this->load->model('Film_model');
-		while($page < 10){
-			$films = $this->Film_model->get($page++ * $limit, $limit);
-			if(empty($films)){
-				break;
-			}
-
-			foreach($films as $film){
-				if(empty($film['douban_post_cover']) ||
-					(strpos($film['douban_post_cover'], 'ipst') === false && strpos($film['douban_post_cover'], 'lpst') === false &&
-						strpos($film['douban_post_cover'], 'lpic') === false && strpos($film['douban_post_cover'], 'movie_default_large') === false)) {
-					$film_detail_from_douban = $this->_craw_douban_detail($film['douban_id'], array('post_cover'));
-					if(!empty($film_detail_from_douban)){
-						$this->Film_model->update_douban_post_cover($film['id'], $film_detail_from_douban['post_cover']);
-						echo 'success update doubanid :' . $film['douban_id'] . PHP_EOL;
-					}else{
-						$this->log_error('get nothing from douban:' . $film['douban_id']);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * update海报
-	 * @param $data_dir
-	 */
-	public function download_post_covers($data_dir)
-	{
-		$data_dir = str_replace(':', '/', $data_dir);
-		$this->load->model('Film_pic_model');
 		$limit = 10;
-		for($page = 0; ; $page++){
-			sleep(1);
-			if($page > 100000000) {
-				break;
-			}
-			$pics = $this->Film_pic_model->get_pics($page * $limit, $limit);
-			if(empty($pics)) {
+		$this->load->model('Film_model');
+		$this->load->model('Film_recom_model');
+		while($page < 100){
+			$un_crawed_douban_ids = $this->Film_recom_model->get_un_crawed_douban_ids($page++ * $limit, $limit);
+			if(empty($un_crawed_douban_ids)){
+				echo 'end' . PHP_EOL;
 				break;
 			}
 
-			foreach($pics as $tmp) {
-				if(empty($tmp['file_name']) && !empty($tmp['douban_url']) && !empty($tmp['id']) && empty($tmp['file_name']) ) {
-					$or_pic_url = $tmp['douban_url'];
-					$down_pic_url = str_replace('https', 'http', $or_pic_url);
-					$down_pic_file_name = substr($down_pic_url, strrpos($down_pic_url, '/') + 1);
-					$down_pic_file_full_path = rtrim($data_dir, '/') . '/' . $down_pic_file_name;
-					$cmd = "wget -q {$down_pic_url} -O $down_pic_file_full_path";
-					exec($cmd);
-					if(file_exists($down_pic_file_full_path)) {
-						$this->Film_pic_model->update_file_name($tmp['id'], $down_pic_file_name);
-					}
+			foreach($un_crawed_douban_ids as $tmp){
+				$douban_id = $tmp['douban_id'];
+				echo 'no exist:' . $douban_id.PHP_EOL;
+				if($this->_craw_and_store_douban_film($douban_id)){
+					echo 'success:' . $douban_id.PHP_EOL;
+				}else{
+					$this->Film_recom_model->incr_invalid_times($douban_id);
+					echo 'fail:' . $douban_id.PHP_EOL;
 				}
 			}
 		}
@@ -135,14 +41,11 @@ class Task extends MY_Controller {
 		$this->load->model('Film_bt_model');
 
 		$i = 0;
-		$start = 0;
 		$find_none = $find_one = $find_multi = 0;
 		while(!feof($rfp)) {
 			if($i++ > 1000000) {
 				break;
 			}
-
-			if($i < $start) continue;
 
 			$line = trim(fgets($rfp));
 			if(empty($line)) {
@@ -151,7 +54,7 @@ class Task extends MY_Controller {
 
 			$data = json_decode($line, true);
 			if(empty($data) || !is_array($data)) {
-				echo '空:' . PHP_EOL . $line . PHP_EOL;
+				$this->log_error('空:' . $line);
 			}
 
 			if(!empty($data['name'])) {
@@ -170,6 +73,7 @@ class Task extends MY_Controller {
 						}
 					}
 				}
+
 				$query_res = $this->_search_unique_film_by_name_actor($data['name'], $actor_search);
 				if(empty($query_res['count'])){
 					$find_none++;
@@ -205,7 +109,11 @@ class Task extends MY_Controller {
 						));
 					}
 					if(!empty($insert_bts_array)){
-						$this->Film_bt_model->insert_batch($insert_bts_array);
+						foreach($insert_bts_array as $bt){
+							if(empty($this->Film_bt_model->get_by_url($bt['url']))) {
+								$this->Film_bt_model->insert($bt);
+							}
+						}
 						$this->Film_model->update_loldytt_info($query_res['film_detail']['id'], $data);
 						echo 'success : ' . $query_res['film_detail']['douban_id'] . PHP_EOL;
 					}
@@ -223,116 +131,18 @@ class Task extends MY_Controller {
 		echo $find_none . '-' . $find_one . '-' . $find_multi . PHP_EOL;
 	}
 
-	/**
-	 * 图片到七牛
-	 * @param $data_dir
-	 */
-	public function upload_pic_qiniu($data_dir)
-	{
-		$data_dir = str_replace(':', '/', $data_dir);
-		$dp = opendir($data_dir);
-		$i = 0;
-		while(($file_name = readdir($dp)) !== false) {
-			$name = $file_name;
-			$file_path = $data_dir . '/' . $file_name;
-			if(is_file($file_path) && filesize($file_path) > 100) {
-				if($i++ > 1000) {
-					break;
-				}
-				$upload_res = $this->qiniu->upload($file_path, $name);
-				if($upload_res) {
-					unlink($file_path);
-				}
-			}
-		}
-	}
-
-	/**
-	 * 下载豆瓣图片
-	 * @param $data_dir
-	 */
-	public function download_douban_pics($data_dir)
-	{
-		$data_dir = str_replace(':', '/', $data_dir);
-		$this->load->model('Film_pic_model');
-		$limit = 10;
-		for($page = 0; ; $page++){
-			sleep(1);
-			if($page > 100000000) {
-				break;
-			}
-			$pics = $this->Film_pic_model->get_pics($page * $limit, $limit);
-			if(empty($pics)) {
-				break;
-			}
-
-			foreach($pics as $tmp) {
-				if(empty($tmp['file_name']) && !empty($tmp['douban_url']) && !empty($tmp['id']) && empty($tmp['file_name']) ) {
-					$or_pic_url = $tmp['douban_url'];
-					$down_pic_url = str_replace('https', 'http', $or_pic_url);
-					$down_pic_file_name = substr($down_pic_url, strrpos($down_pic_url, '/') + 1);
-					$down_pic_file_full_path = rtrim($data_dir, '/') . '/' . $down_pic_file_name;
-					$cmd = "wget -q {$down_pic_url} -O $down_pic_file_full_path";
-					exec($cmd);
-					if(file_exists($down_pic_file_full_path)) {
-						$this->Film_pic_model->update_file_name($tmp['id'], $down_pic_file_name);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * 导入豆瓣图片url到db
-	 * @param $data_path
-	 */
-	public function import_douban_film_pics($data_path)
-	{
-		$data_path = str_replace(':', '/', $data_path);
-		$fp = fopen($data_path, 'r');
-		$this->load->model('Film_pic_model');
-
-		$i = 0;
-		while(!feof($fp)) {
-			if($i > 10000000000) {
-				break;
-			}
-
-			$i++;
-
-			$line = trim(fgets($fp));
-			if(empty($line)) {
-				continue;
-			}
-
-			$data = json_decode($line, true);
-			if(empty($data) || !is_array($data)) {
-				echo '空:' . PHP_EOL . $line . PHP_EOL;
-			}
-
-			if(!empty($data['related_pics'])) {
-				foreach($data['related_pics'] as $pic_url) {
-					$this->Film_pic_model->insert(array(
-						'douban_id' => $data['id'],
-						'douban_url' => $pic_url,
-					));
-				}
-			}
-		}
-
-		fclose($fp);
-	}
-
 	/************************************************* private methods *************************************************************/
 
 	/**
 	 * 爬取并存储豆瓣电影(爬取、入库、处理图片、处理海报)
 	 * @param $douban_id
+	 * @return bool
 	 */
 	private function _craw_and_store_douban_film($douban_id){
 		$this->load->model('Film_model');
 		if(empty($this->Film_model->get_by_douban_id($douban_id))){
 			$douban_film_detail = $this->_craw_douban_detail($douban_id);
+
 			if(empty($douban_film_detail)){
 				return false;
 			}
@@ -382,8 +192,26 @@ class Task extends MY_Controller {
 				if(!empty($douban_film_detail['post_cover'])){
 					$this->_update_post_cover($douban_film_detail['id'], $douban_film_detail['post_cover']);
 				}
+
+				// handle recom
+				if(!empty($douban_film_detail['recomm_ids'])){
+					$insert_data = array();
+					$recom_douban_ids = array_unique($douban_film_detail['recomm_ids']);
+					foreach($recom_douban_ids as $tmp){
+						array_push($insert_data, array(
+							'douban_id' => $douban_film_detail['id'],
+							'recom_douban_id' => $tmp,
+						));
+					}
+
+					if(!empty($insert_data)){
+						$this->Film_recom_model->insert_batch($insert_data);
+					}
+				}
 			}
 		}
+
+		return true;
 	}
 
 	/**
@@ -445,7 +273,7 @@ class Task extends MY_Controller {
 					}
 					@unlink($down_pic_file_full_path);
 				}else{
-					$this->log_error('download fail:' . $douban_id);
+					$this->log_error('download fail:' . $douban_id . ':' . $down_pic_url);
 				}
 			}
 
@@ -469,17 +297,17 @@ class Task extends MY_Controller {
 		);
 
 		if(strpos($name, '/') !== false){
-
 			$name = substr($name, 0, stripos($name, '/'));
 		}
 		if(strpos($name, '(') !== false){
-
 			$name = substr($name, 0, stripos($name, '('));
 		}
 
 		$this->load->Model('Film_name_model');
 		$this->load->Model('Film_model');
 		$query_res = $this->Film_name_model->search_by_name($name);
+
+		// '生化危机5终章' =>  '生化危机5', 针对这种
 		if(empty($query_res)) {
 			$pattern = '#[\s\S]*[\d]#U';
 			preg_match($pattern, $name, $matches);
@@ -487,6 +315,7 @@ class Task extends MY_Controller {
 				$query_res = $this->Film_name_model->search_by_name($matches[0]);
 			}
 		}
+
 		if(count($query_res) == 0){
 			return $res;
 		}else if(count($query_res) == 1) {
@@ -803,20 +632,50 @@ class Task extends MY_Controller {
 		$cookie_file_path = './douban_cookie.txt';
 		$cookie_ttl_file_path = './douban_cookie_ttl.txt';
 		$start_time = file_get_contents($cookie_ttl_file_path);
-		if((time() - $start_time) > 5) {
+		if((time() - $start_time) > 3) {
 			file_put_contents($cookie_file_path, '');
 			file_put_contents($cookie_ttl_file_path, time());
 		}
 
-		return $this->_curl($url, null, $cookie_file_path);
+		$header = array(
+			'Accept:text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+			'Accept-Encoding:GB2312,utf-8;q=0.7,*;q=0.7',
+			'Accept-Language:zh-cn,zh;q=0.5',
+			'Host:movie.douban.com',
+			'User-Agent:Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0'.
+			'Referer:http://movie.douban.com/',
+			'Cache-Control:max-age=0',
+		);
+
+		$proxy_array = array(
+			array(
+				'ip' => '111.13.7.119',
+				'port' => '8080',
+			),
+			array(
+				'ip' => '111.13.2.131',
+				'port' => '80',
+			),
+		);
+
+		$proxy = array();
+		if(($rand = rand(0, count($proxy_array))) < count($proxy_array)){
+			$proxy = $proxy_array[$rand];
+		}
+
+		return $this->_curl($url, null, $cookie_file_path, $header, $proxy);
 	}
 
-	private function _curl($url, $post_data, $cookie_jar){
+	private function _curl($url, $post_data, $cookie_jar, $header, $proxy){
 		$ch = curl_init();
+		if(!empty($proxy)){
+			curl_setopt($ch,CURLOPT_PROXY, $proxy['ip']);
+			curl_setopt($ch,CURLOPT_PROXYPORT, $proxy['port']);
+		}
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 		if(!empty($post_data)) {
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
@@ -825,15 +684,29 @@ class Task extends MY_Controller {
 			curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_jar);
 			curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_jar);
 		}
+		if(!empty($header)){
+			curl_setopt ($ch, CURLOPT_HTTPHEADER, $header);
+		}
 
 		$res  = curl_exec($ch);
-		$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		$errno     = curl_errno($ch);
+		if($errno != 0){
+//			echo 'retry 1' . PHP_EOL;
+			$res  = curl_exec($ch);
+			$errno     = curl_errno($ch);
+			if($errno != 0){
+//				echo 'retry 2' . PHP_EOL;
+				$res  = curl_exec($ch);
+				$errno     = curl_errno($ch);
+			}
+		}
+		$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		$errmsg    = (0 != $errno) ? curl_error($ch) : '';
 		curl_close($ch);
 
+//		echo $http_code . PHP_EOL. 'errno:' . $errno . PHP_EOL . $errmsg . PHP_EOL . $res;exit;
 		if($http_code != 200 || $errno != 0) {
-			$this->log_error('curl fail.errno:' .  $errno . ';errmsg:' . $errmsg . ';url:' . $url);
+			$this->log_error('curl fail.http code:' . $http_code .';errno:' .  $errno . ';errmsg:' . $errmsg . ';url:' . $url);
 			return '';
 		}else{
 			return $res;

@@ -43,7 +43,7 @@ class Film extends MY_Controller {
 			$film_detail['comments'] = !empty($film_detail['comments'])? json_decode($film_detail['comments'], true):array();
 			$film_detail['related_pics'] = $this->Film_pic_model->get_pics_by_douban_id($film_detail['douban_id']);
 			if(!empty($film_detail['recom_douban_id'])) {
-				$film_detail['recom_films'] = $this->Film_model->get_by_douban_ids(explode(',', $film_detail['recom_douban_id']));
+				$film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['douban_id']);
 			}
 
 			$bts = $this->Film_bt_model->get_by_douban_id($film_detail['douban_id']);
