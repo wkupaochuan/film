@@ -119,4 +119,10 @@ SQL;
 		$query = $this->db->query($sql);
 		return $query->result_array();
 	}
+
+	public function rec()
+	{
+		$this->db->close();
+		$this->load->database();
+	}
 }

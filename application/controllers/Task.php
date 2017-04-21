@@ -2,16 +2,14 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Task extends MY_Controller {
-	public function test($id){
-		$this->_request_douban("https://movie.douban.com/subject/{$id}/");
-	}
 
 	public function craw_douban_films_by_db_recom_ids(){
 		$page = 0;
 		$limit = 10;
 		$this->load->model('Film_model');
 		$this->load->model('Film_recom_model');
-		while($page < 100){
+		$start_time = time();
+		while($page < 1000000){
 			$un_crawed_douban_ids = $this->Film_recom_model->get_un_crawed_douban_ids($page++ * $limit, $limit);
 			if(empty($un_crawed_douban_ids)){
 				echo 'end' . PHP_EOL;
@@ -19,6 +17,10 @@ class Task extends MY_Controller {
 			}
 
 			foreach($un_crawed_douban_ids as $tmp){
+				if((time() - $start_time) >= 10){
+					$this->Film_model->rec();
+					$start_time = time();
+				}
 				$douban_id = $tmp['douban_id'];
 				echo 'no exist:' . $douban_id.PHP_EOL;
 				if($this->_craw_and_store_douban_film($douban_id)){
@@ -75,6 +77,28 @@ class Task extends MY_Controller {
 				}
 
 				$query_res = $this->_search_unique_film_by_name_actor($data['name'], $actor_search);
+//				if(empty($query_res['count'])){
+//					$ec = array(
+//						'诛仙番外之铃心剑魄',
+//						'浪漫搭档',
+//						'绝命追凶',
+//						'功夫机器侠',
+//						'杀手离沫',
+//						'最后通话',
+//						'拳日制',
+//						'祖父',
+//						'杀手离沫',
+//						'杀手离沫',
+//						'杀手离沫',
+//						'杀手离沫',
+//						'杀手离沫',
+//					);
+//					if(in_array($data['name'], $ec)){
+//						continue;
+//					}
+//					echo 'find none:' . PHP_EOL . $line . PHP_EOL;
+//					exit;
+//				}
 				if(empty($query_res['count'])){
 					$find_none++;
 					echo 'none : ' . $data['name'] . ':' . $actor_search . PHP_EOL;
@@ -139,6 +163,7 @@ class Task extends MY_Controller {
 	 * @return bool
 	 */
 	private function _craw_and_store_douban_film($douban_id){
+
 		$this->load->model('Film_model');
 		if(empty($this->Film_model->get_by_douban_id($douban_id))){
 			$douban_film_detail = $this->_craw_douban_detail($douban_id);
@@ -296,9 +321,6 @@ class Task extends MY_Controller {
 			'film_detail' => array()
 		);
 
-		if(strpos($name, '/') !== false){
-			$name = substr($name, 0, stripos($name, '/'));
-		}
 		if(strpos($name, '(') !== false){
 			$name = substr($name, 0, stripos($name, '('));
 		}
@@ -314,6 +336,22 @@ class Task extends MY_Controller {
 			if(!empty($matches) && !empty($matches[0])){
 				$query_res = $this->Film_name_model->search_by_name($matches[0]);
 			}
+		}
+
+		// 惊悚救援/核力突破
+		if(empty($query_res)){
+			if(strpos($name, '/') !== false){
+				$query_res = $this->Film_name_model->search_by_name(substr($name, 0, stripos($name, '/')));
+				if(empty($query_res)){
+					$query_res = $this->Film_name_model->search_by_name(substr($name, stripos($name, '/') + 1));
+				}
+			}
+		}
+
+		// "假小子2016" => "假小子" 这种情况
+		if(empty($query_res)){
+			$pattern = '#[\d]*$#';
+			$query_res = $this->Film_name_model->search_by_name(preg_replace($pattern, '', $name));
 		}
 
 		if(count($query_res) == 0){
