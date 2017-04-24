@@ -2,32 +2,33 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Task extends MY_Controller {
+	public function test(){
+		$this->load->model('Film_model');
+		print_r($this->Film_model->get_by_douban_id(1292001));
+		sleep(20);
+		print_r($this->Film_model->get_by_douban_id(1292001));
+	}
 
 	public function craw_douban_films_by_db_recom_ids(){
 		$page = 0;
 		$limit = 10;
 		$this->load->model('Film_model');
 		$this->load->model('Film_recom_model');
-		$start_time = time();
-		while($page < 1000000){
-			$un_crawed_douban_ids = $this->Film_recom_model->get_un_crawed_douban_ids($page++ * $limit, $limit);
+		while($page++ < 10000000){
+			$un_crawed_douban_ids = $this->Film_recom_model->get_un_crawed_douban_ids(0, $limit);
 			if(empty($un_crawed_douban_ids)){
-				echo 'end' . PHP_EOL;
+				echo 'end ' . $page . PHP_EOL;
 				break;
 			}
 
 			foreach($un_crawed_douban_ids as $tmp){
-				if((time() - $start_time) >= 10){
-					$this->Film_model->rec();
-					$start_time = time();
-				}
 				$douban_id = $tmp['douban_id'];
-				echo 'no exist:' . $douban_id.PHP_EOL;
+				echo 'no exist:' . $douban_id . PHP_EOL;
 				if($this->_craw_and_store_douban_film($douban_id)){
-					echo 'success:' . $douban_id.PHP_EOL;
+					echo 'success:' . $douban_id . PHP_EOL;
 				}else{
 					$this->Film_recom_model->incr_invalid_times($douban_id);
-					echo 'fail:' . $douban_id.PHP_EOL;
+					echo 'fail:' . $douban_id . PHP_EOL;
 				}
 			}
 		}

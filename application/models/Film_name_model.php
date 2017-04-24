@@ -9,12 +9,12 @@ class Film_name_model extends MY_Model {
 
 	function insert_batch($names)
 	{
-		$this->db->insert_batch($this->_table, $names);
+		$this->_get_db()->insert_batch($this->_table, $names);
 	}
 
 	function search_by_name($name) {
-		$sql = "select * from film_names where `name` like '%" . $this->db->escape_str($name) ."%';";
-		$query = $this->db->query($sql);
+		$sql = "select * from film_names where `name` like '%" . $this->_get_db()->escape_str($name) ."%';";
+		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}
 
