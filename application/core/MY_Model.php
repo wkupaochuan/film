@@ -11,7 +11,9 @@ class MY_Model extends CI_Model {
 			$last_query_time = time();
 		}else{
 			if((time() - $last_query_time) > 3){
-				$this->db->reconnect();
+				if(!$this->db->reconnect()){
+					$this->load->database();
+				}
 			}
 		}
 		return $this->db;
