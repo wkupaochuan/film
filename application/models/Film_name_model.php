@@ -9,7 +9,7 @@ class Film_name_model extends MY_Model {
 
 	function insert_batch($names)
 	{
-		$this->_get_db()->insert_batch($this->_table, $names);
+		$this->_insert_ignore_batch($this->_table, $names);
 	}
 
 	function search_by_name($name) {

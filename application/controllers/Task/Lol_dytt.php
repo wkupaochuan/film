@@ -11,10 +11,7 @@ class Lol_dytt extends MY_Controller {
 		$data_path = str_replace(':', '/', $data_path);
 		$output_path = str_replace(':', '/', $output_path);
 		$rfp = fopen($data_path, 'r');
-		$wfp = fopen($output_path, 'w');
-		$this->load->model('Film_model');
-		$this->load->model('Film_bt_model');
-
+		$wfp = fopen($output_path, 'a+');
 		$i = 0;
 		while(!feof($rfp)) {
 			if($i++ > 100000) {
@@ -31,16 +28,9 @@ class Lol_dytt extends MY_Controller {
 				$this->log_error('空:' . $line);
 			}
 
-			if($data['loldytt_url']){
-				$film_info = $this->_craw_film_detail($data['loldytt_url']);
-				if(empty($film_info) || empty($film_info['name'])){
-					$this->log_error('get nothing from url ' . $data['loldytt_url']);
-				}else{
-					$film_info['url'] = $data['loldytt_url'];
-					fputs($wfp, json_encode($film_info) . PHP_EOL);
-					$this->c_echo('success ' . $i . ':' . $data['loldytt_url']);
-				}
-			}
+			$url = trim(substr($data['url'], strpos($data['url'], '.com') + 4), '/');
+
+			$this->_craw_and_store($url, $output_path, $data);
 		}
 
 		fclose($rfp);
@@ -48,14 +38,183 @@ class Lol_dytt extends MY_Controller {
 		echo "end. cost " . (time() - $start_time) . PHP_EOL;
 	}
 
+	public function craw_films_by_recom($output_path){
+		$start_time = time();
+		$output_path = str_replace(':', '/', $output_path);
+		$wfp = fopen($output_path, 'a+');
+		$page = 0;
+		$limit = 10;
+		$this->load->model('Film_model');
+		$this->load->model('Lol_recom_model');
+		while($page++ < 1){
+			$un_crawed_urls = $this->Lol_recom_model->get_un_crawed_urls(0, $limit);
+
+			if(empty($un_crawed_urls)){
+				echo 'end ' . $page . PHP_EOL;
+				break;
+			}
+
+			foreach($un_crawed_urls as $tmp){
+				$lol_url = $tmp['lol_url'];
+				echo 'no exist:' . $lol_url . PHP_EOL;
+				if($this->_craw_and_store($lol_url, $wfp)){
+					echo 'success:' . $lol_url . PHP_EOL;
+				}else{
+					$this->Lol_recom_model->incr_invalid_times($lol_url);
+					echo 'fail:' . $lol_url . PHP_EOL;
+				}
+			}
+		}
+
+		fclose($wfp);
+		echo "end. cost " . (time() - $start_time) . PHP_EOL;
+	}
+
 	/************************************************* private methods *************************************************************/
 
+	/**
+	 * 爬取存储lol film
+	 * @param $url
+	 * @param $wfp
+	 * @param array $film_detail
+	 * @return bool
+	 */
+	private function _craw_and_store($url, $wfp, $film_detail = array()){
+		if(empty($film_detail)){
+			$film_detail = $this->_craw_film_detail($url);
+		}
+
+		if(empty($film_detail)){
+			$this->log_error('craw nothing from url ' . $url);
+			return false;
+		}else if(!empty($film_detail)){
+			$this->load->model('Lol_recom_model');
+			$this->load->model('Film_bt_model');
+			$this->load->model('Film_bt_batch_model');
+
+			// add recoms
+			if(!empty($film_detail['recom'])){
+				$this->_store_recom($url, $film_detail['recom']);
+			}
+
+			// find film from db
+			if(empty($film_detail['actors'])){
+				// output > file
+				$film_detail['no_actors'] = 1;
+				fputs($wfp, json_encode($film_detail) . PHP_EOL);
+				return false;
+			}else{
+				$query_res = $this->_search_unique_film_from_db($url, $film_detail['name'], $film_detail['actors'], empty($film_detail['director'])? '':$film_detail['director']);
+
+				if($query_res['count'] == 0 || $query_res['count'] > 1){
+					$film_detail['query_count'] = $query_res['count'];
+					// output > file
+					fputs($wfp, json_encode($film_detail) . PHP_EOL);
+					$this->log_error('search result fail');
+					return false;
+				}else{
+					$db_film_detail = $query_res['film_detail'];
+					if(empty($db_film_detail) || empty($db_film_detail['douban_id'])){
+						$this->log_error('bad db film' . json_encode($db_film_detail));
+						return false;
+					}
+
+					// update lol url
+					if(empty($db_film_detail['lol_url'])){
+						$this->Film_model->update_by_douban_id($db_film_detail['douban_id'], array(
+							'lol_url' => $url,
+							'download_able' => 1,
+						));
+					}
+
+					// process bts
+					$this->_store_bts($film_detail, $db_film_detail['douban_id']);
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * 存储lol recom
+	 * @param $lol_url
+	 * @param $recom_url_arr
+	 */
+	private function _store_recom($lol_url, $recom_url_arr){
+		$recom_data_array = array();
+		foreach($recom_url_arr as $tmp){
+			array_push(
+				$recom_data_array,
+				array(
+					'lol_url' => $lol_url,
+					'recom_url' => $tmp,
+				)
+			);
+		}
+
+		if(!empty($recom_data_array)){
+			$this->Lol_recom_model->insert_batch($recom_data_array);
+		}
+	}
+
+	/**
+	 * 存储bts
+	 * @param $film_detail
+	 * @param $douban_id
+	 */
+	private function _store_bts($film_detail, $douban_id){
+		$types = array(
+			'thunder' => 1,
+			'bt' => 2,
+			'magnet' => 3
+		);
+		$insert_data = array();
+		foreach($types as $type_key => $type){
+			if(!empty($film_detail[$type_key])){
+				foreach($film_detail[$type_key] as $bt_array){
+					$exist_bts = $this->Film_bt_model->get_by_urls(array_column($bt_array, 'link'));
+					$exist_urls = array();
+
+					if(empty($exist_bts)){
+						$batch_id = $this->Film_bt_batch_model->insert(array('type' => $type));
+					}else{
+						$exist_urls = array_column($exist_bts, 'url');
+						$batch_id = $exist_bts[0]['batch_id'];
+					}
+
+					foreach($bt_array as $bt){
+						if(!in_array($bt['link'], $exist_urls)){
+							array_push($insert_data, array(
+								'batch_id' => $batch_id,
+								'douban_id' => $douban_id,
+								'url' => $bt['link'],
+								'name' => $bt['title'],
+							));
+						}
+					}
+				}
+			}
+		}
+
+		if(!empty($insert_data)){
+			// insert bts
+			$this->Film_bt_model->insert_batch($insert_data);
+		}
+	}
+
+	/**
+	 * 爬取详情
+	 * @param $url
+	 * @return array
+	 */
 	private function _craw_film_detail($url){
 		$ret = array();
 
 		if(empty($url)){
 			return $ret;
 		}
+		$url = "http://www.loldytt.com/{$url}/";
 
 		$html = $this->_get_film_html($url);
 
@@ -70,12 +229,16 @@ class Lol_dytt extends MY_Controller {
 		preg_match($pattern, $html, $matches);
 		if(!empty($matches) && !empty($matches[1])) {
 			$tmp_html = $matches[1];
-			$pattern = '#<a href="[a-zA-Z/]+">([\s\S]*)</a>#U';
+			$pattern = '#<a href="([\s\S]*)">([\s\S]*)</a>#U';
 			$matches = array();
 			preg_match($pattern, $tmp_html, $matches);
-			if(!empty($matches) && !empty($matches[1])) {
-				$ret['name'] = $matches[1];
+			if(!empty($matches) && !empty($matches[2])) {
+				$ret['name'] = $matches[2];
 			}
+		}
+
+		if(empty($ret['name'])){
+			return $ret;
 		}
 
 		// 导演
@@ -139,6 +302,10 @@ class Lol_dytt extends MY_Controller {
 			$ret['bt'] = $bts;
 		}
 
+		if(empty($ret['thunder']) && empty($ret['bt']) && empty($ret['magnet'])){
+			return array();
+		}
+
 		return $ret;
 	}
 
@@ -156,7 +323,14 @@ class Lol_dytt extends MY_Controller {
 			return $res;
 		}
 
-		$html = $param == ''? $this->_curl($encryptUrl):$this->_curl($encryptUrl . '?' . $param);
+		$cookie_file_path = './lol_cookie.txt';
+		static $cookie_time;
+		if(empty($cookie_time) || (time() - $cookie_time) > 3){
+			$cookie_time = time();
+			file_put_contents($cookie_file_path, '');
+		}
+
+		$html = $param == ''? $this->_curl($encryptUrl, array(), $cookie_file_path):$this->_curl($encryptUrl . '?' . $param, array(), $cookie_file_path);
 		if(strlen($html) > 500) {
 			$res = iconv(mb_detect_encoding($html,array('UTF-8','GBK','GB2312')), 'UTF-8', $html);
 			return $res;
@@ -265,6 +439,84 @@ class Lol_dytt extends MY_Controller {
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * 查询唯一的电影详情
+	 * @param $lol_url
+	 * @param $name
+	 * @param $actors array
+	 * @param $director string
+	 * @return array
+	 */
+	private function _search_unique_film_from_db($lol_url, $name, $actors, $director){
+		$res = array(
+			'count' => 0,
+			'film_detail' => array()
+		);
+
+
+		$this->load->Model('Film_name_model');
+		$this->load->Model('Film_model');
+
+		// 已经存在bt资源的
+		$query_res = $this->Film_model->query_by_lol_url($lol_url);
+		if(!empty($query_res)){
+			$res = array(
+				'count' => 1,
+				'film_detail' => $query_res
+			);
+
+			return $res;
+		}
+
+//		if(strpos($name, '(') !== false){
+//			$name = substr($name, 0, stripos($name, '('));
+//		}
+
+		$query_res = $this->Film_name_model->search_by_name($name);
+
+		// '生化危机5终章' =>  '生化危机5'
+		if(empty($query_res)) {
+			$pattern = '#[\s\S]*[\d]#U';
+			preg_match($pattern, $name, $matches);
+			if(!empty($matches) && !empty($matches[0])){
+				$query_res = $this->Film_name_model->search_by_name($matches[0]);
+			}
+		}
+
+		// 惊悚救援/核力突破
+		if(empty($query_res)){
+			if(strpos($name, '/') !== false){
+				$query_res = $this->Film_name_model->search_by_name(substr($name, 0, stripos($name, '/')));
+				if(empty($query_res)){
+					$query_res = $this->Film_name_model->search_by_name(substr($name, stripos($name, '/') + 1));
+				}
+			}
+		}
+
+		// "假小子2016" => "假小子" 这种情况
+		if(empty($query_res)){
+			$pattern = '#[\d]*$#';
+			$query_res = $this->Film_name_model->search_by_name(preg_replace($pattern, '', $name));
+		}
+
+		if(count($query_res) >= 1){
+			// 根据actor再次定位
+			if(!empty($actors)){
+				$douban_ids = array_column($query_res, 'douban_id');
+				$query_res = $this->Film_model->query_by_actors_and_douban_id($douban_ids, $actors[0]);
+			}
+
+			if(count($query_res) == 1) {
+				$res['count'] = 1;
+				$res['film_detail'] = $query_res[0];
+			}else{
+				$res['count'] = count($query_res);
+			}
+		}
+
+		return $res;
 	}
 
 	private function c_echo($str)  {

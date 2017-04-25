@@ -102,6 +102,9 @@ class Film_model extends MY_Model {
 	}
 
 	public function update_by_douban_id($douban_id, $update_info){
+		if(empty($douban_id) || empty($update_info)){
+			return;
+		}
 		$where = array(
 			'douban_id' => $douban_id
 		);
@@ -120,4 +123,9 @@ SQL;
 		return $query->result_array();
 	}
 
+	public function query_by_lol_url($url){
+		$url = $this->_get_db()->escape($url);
+		$sql = "select * from {$this->_table} where `lol_url` = {$url}";
+		return $this->_c_query_unique($sql);
+	}
 }

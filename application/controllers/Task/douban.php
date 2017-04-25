@@ -1,12 +1,49 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-
-class Task extends MY_Controller {
+class Douban extends MY_Controller {
 	public function test(){
+		$page = 0;
+		$limit = 5;
 		$this->load->model('Film_model');
-		print_r($this->Film_model->get_by_douban_id(1292001));
-		sleep(20);
-		print_r($this->Film_model->get_by_douban_id(1292001));
+		$this->load->model('Film_name_model');
+		while($page < 10000000){
+			$films = $this->Film_model->get($page++ * $limit, $limit);
+			if(empty($films)){
+				echo 'end ' . $page . PHP_EOL;
+				break;
+			}
+
+			echo $page . PHP_EOL;
+
+			$insert_data = array();
+			foreach($films as $tmp){
+				if(!empty($tmp['ch_name'])){
+					array_push($insert_data, array(
+						'name' => $tmp['ch_name'],
+						'douban_id' => $tmp['douban_id'],
+					));
+				}
+				if(!empty($tmp['or_name'])){
+					array_push($insert_data, array(
+						'name' => $tmp['or_name'],
+						'douban_id' => $tmp['douban_id'],
+					));
+				}
+
+				if(!empty($tmp['other_names'])){
+					$other_names = json_decode($tmp['other_names'], true);
+					foreach($other_names as $name){
+						array_push($insert_data, array(
+							'name' => $name,
+							'douban_id' => $tmp['douban_id'],
+						));
+					}
+				}
+			}
+
+			if(!empty($insert_data)){
+				$this->Film_name_model->insert_batch($insert_data);
+			}
+		}
 	}
 
 	public function craw_douban_films_by_db_recom_ids(){
@@ -78,28 +115,6 @@ class Task extends MY_Controller {
 				}
 
 				$query_res = $this->_search_unique_film_by_name_actor($data['name'], $actor_search);
-//				if(empty($query_res['count'])){
-//					$ec = array(
-//						'诛仙番外之铃心剑魄',
-//						'浪漫搭档',
-//						'绝命追凶',
-//						'功夫机器侠',
-//						'杀手离沫',
-//						'最后通话',
-//						'拳日制',
-//						'祖父',
-//						'杀手离沫',
-//						'杀手离沫',
-//						'杀手离沫',
-//						'杀手离沫',
-//						'杀手离沫',
-//					);
-//					if(in_array($data['name'], $ec)){
-//						continue;
-//					}
-//					echo 'find none:' . PHP_EOL . $line . PHP_EOL;
-//					exit;
-//				}
 				if(empty($query_res['count'])){
 					$find_none++;
 					echo 'none : ' . $data['name'] . ':' . $actor_search . PHP_EOL;
@@ -308,73 +323,6 @@ class Task extends MY_Controller {
 			$this->log_error('ilegal url:' . $douban_id . ';' . $douban_post_cover_link);
 			return false;
 		}
-	}
-
-	/**
-	 * 根据名称和演员查询唯一的电影详情
-	 * @param $name
-	 * @param $actor
-	 * @return array
-	 */
-	private function _search_unique_film_by_name_actor($name, $actor){
-		$res = array(
-			'count' => 0,
-			'film_detail' => array()
-		);
-
-		if(strpos($name, '(') !== false){
-			$name = substr($name, 0, stripos($name, '('));
-		}
-
-		$this->load->Model('Film_name_model');
-		$this->load->Model('Film_model');
-		$query_res = $this->Film_name_model->search_by_name($name);
-
-		// '生化危机5终章' =>  '生化危机5', 针对这种
-		if(empty($query_res)) {
-			$pattern = '#[\s\S]*[\d]#U';
-			preg_match($pattern, $name, $matches);
-			if(!empty($matches) && !empty($matches[0])){
-				$query_res = $this->Film_name_model->search_by_name($matches[0]);
-			}
-		}
-
-		// 惊悚救援/核力突破
-		if(empty($query_res)){
-			if(strpos($name, '/') !== false){
-				$query_res = $this->Film_name_model->search_by_name(substr($name, 0, stripos($name, '/')));
-				if(empty($query_res)){
-					$query_res = $this->Film_name_model->search_by_name(substr($name, stripos($name, '/') + 1));
-				}
-			}
-		}
-
-		// "假小子2016" => "假小子" 这种情况
-		if(empty($query_res)){
-			$pattern = '#[\d]*$#';
-			$query_res = $this->Film_name_model->search_by_name(preg_replace($pattern, '', $name));
-		}
-
-		if(count($query_res) == 0){
-			return $res;
-		}else if(count($query_res) == 1) {
-			$res['count'] = 1;
-			$res['film_detail'] = $this->Film_model->get_by_douban_id($query_res[0]['douban_id']);
-		}else{
-			$douban_ids = array();
-			foreach($query_res as $tmp){
-				array_push($douban_ids, $tmp['douban_id']);
-			}
-			$query_res = $this->Film_model->query_by_actors_and_douban_id($douban_ids, $actor);
-			if(count($query_res) == 1) {
-				$res['count'] = 1;
-				$res['film_detail'] = $query_res[0];
-			}else{
-				$res['count'] = count($query_res);
-			}
-		}
-
-		return $res;
 	}
 
 	/**
