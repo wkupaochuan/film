@@ -60,41 +60,66 @@
 
 		<!--下载资源-->
 		{if count($data.film_detail.bt.thunder) gt 0}
-			<div  class="related-pic">
-				<h4>迅雷下载</h4>
-				<ul class="downurl">
-					{foreach from=$data.film_detail.bt.thunder item=bt}
-						<li>
-							<div class="loldytt">
-								<div>
-									<span>{$bt.name}</span>
-									<input type="text" value="{$bt.url}" />
+			{foreach from=$data.film_detail.bt.thunder item=bt_batch}
+				<div  class="related-pic">
+					<h4>迅雷下载</h4>
+					<ul class="downurl">
+						{foreach from=$bt_batch item=bt}
+							<li>
+								<div class="loldytt">
+									<div>
+										<span>{$bt.name}</span>
+										<input type="text" value="{$bt.url}" />
+									</div>
 								</div>
-							</div>
-							<div class="dwon_xl"><a target="_self" href="{$bt.url}" thurl="{$bt.url}" mc="" title="迅雷下载" id="1thUrlid0" class="dwon1">迅雷下载</a></div>
-						</li>
-					{/foreach}
-				</ul>
-			</div>
+								<div class="dwon_xl"><a target="_self" href="{$bt.url}" thurl="{$bt.url}" mc="" title="迅雷下载" id="1thUrlid0" class="dwon1">迅雷下载</a></div>
+							</li>
+						{/foreach}
+					</ul>
+				</div>
+			{/foreach}
 		{/if}
 
 		{if count($data.film_detail.bt.bt) gt 0}
-			<div  class="related-pic">
-				<h4>磁力下载</h4>
-				<ul class="downurl">
-					{foreach from=$data.film_detail.bt.bt item=bt}
-						<li>
-							<div class="loldytt">
-								<div>
-									<span>{$bt.name}</span>
-									<input type="text" value="{$bt.url}" />
+			{foreach from=$data.film_detail.bt.bt item=bt_batch}
+				<div  class="related-pic">
+					<h4>磁力下载</h4>
+					<ul class="downurl">
+						{foreach from=$bt_batch item=bt}
+							<li>
+								<div class="loldytt">
+									<div>
+										<span>{$bt.name}</span>
+										<input type="text" value="{$bt.url}" />
+									</div>
 								</div>
-							</div>
-							<div class="dwon_xl"><a target="_self" href="{$bt.url}" thurl="{$bt.url}" mc="" title="迅雷下载" id="1thUrlid0" class="dwon1">迅雷下载</a></div>
-						</li>
-					{/foreach}
-				</ul>
-			</div>
+								<div class="dwon_xl"><a target="_self" href="{$bt.url}" thurl="{$bt.url}" mc="" title="迅雷下载" id="1thUrlid0" class="dwon1">迅雷下载</a></div>
+							</li>
+						{/foreach}
+					</ul>
+				</div>
+			{/foreach}
+		{/if}
+
+		{if count($data.film_detail.bt.mag) gt 0}
+			{foreach from=$data.film_detail.bt.mag item=bt_batch}
+				<div  class="related-pic">
+					<h4>bt下载</h4>
+					<ul class="downurl">
+						{foreach from=$bt_batch item=bt}
+							<li>
+								<div class="loldytt">
+									<div>
+										<span>{$bt.name}</span>
+										<input type="text" value="{$bt.url}" />
+									</div>
+								</div>
+								<div class="dwon_xl"><a target="_self" href="{$bt.url}" thurl="{$bt.url}" mc="" title="迅雷下载" id="1thUrlid0" class="dwon1">迅雷下载</a></div>
+							</li>
+						{/foreach}
+					</ul>
+				</div>
+			{/foreach}
 		{/if}
 
 

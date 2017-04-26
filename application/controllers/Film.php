@@ -55,11 +55,11 @@ class Film extends MY_Controller {
 			if(!empty($bts)){
 				foreach($bts as $tmp){
 					if($tmp['type'] == 1){
-						array_push($sorted_bts['thunder'], $tmp);
+						$sorted_bts['thunder'][$tmp['batch_id']][] = $tmp;
 					}else if($tmp['type'] == 2){
-						array_push($sorted_bts['bt'], $tmp);
+						$sorted_bts['bt'][$tmp['batch_id']][] = $tmp;
 					}else if($tmp['type'] == 3){
-						array_push($sorted_bts['mag'], $tmp);
+						$sorted_bts['mag'][$tmp['batch_id']][] = $tmp;
 					}
 				}
 			}

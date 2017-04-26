@@ -1,5 +1,4 @@
 <?php
-
 class Lol_dytt extends MY_Controller {
 	public function test($url){
 		$this->_craw_film_detail("http://www.loldytt.com/Juqingdianying/{$url}/");
@@ -14,7 +13,7 @@ class Lol_dytt extends MY_Controller {
 		$wfp = fopen($output_path, 'a+');
 		$i = 0;
 		while(!feof($rfp)) {
-			echo $i . PHP_EOL;
+			$this->c_echo($i);
 			if($i++ > 100000) {
 				break;
 			}
@@ -40,7 +39,7 @@ class Lol_dytt extends MY_Controller {
 
 		fclose($rfp);
 		fclose($wfp);
-		echo "end. cost " . (time() - $start_time) . PHP_EOL;
+		$this->c_echo("end. cost " . (time() - $start_time));
 	}
 
 	public function craw_films_by_recom($output_path){
@@ -55,27 +54,95 @@ class Lol_dytt extends MY_Controller {
 			$un_crawed_urls = $this->Lol_recom_model->get_un_crawed_urls(0, $limit);
 
 			if(empty($un_crawed_urls)){
-				echo 'end ' . $page . PHP_EOL;
+				$this->c_echo('end ' . $page);
 				break;
 			}
 
 			foreach($un_crawed_urls as $tmp){
 				$lol_url = $tmp['lol_url'];
-				echo 'no exist:' . $lol_url . PHP_EOL;
+				$this->c_echo('no exist:' . $lol_url);
 				if($this->_craw_and_store($lol_url, $wfp)){
-					echo 'success:' . $lol_url . PHP_EOL;
+					$this->c_echo('success:' . $lol_url);
 				}else{
 					$this->Lol_recom_model->incr_invalid_times($lol_url);
-					echo 'fail:' . $lol_url . PHP_EOL;
+					$this->c_echo('fail:' . $lol_url);
 				}
 			}
 		}
 
 		fclose($wfp);
-		echo "end. cost " . (time() - $start_time) . PHP_EOL;
+		$this->c_echo("end. cost " . (time() - $start_time));
+	}
+
+	/**
+	 * 每日爬取最近更新的条目
+	 * @param $day_length
+	 * @param $output_path
+	 */
+	public function craw_update($day_length, $output_path){
+		if(!intval($day_length)){
+			return;
+		}
+
+		$start_time = time();
+		$output_path = str_replace(':', '/', $output_path);
+		$wfp = fopen($output_path, 'a+');
+
+		$updated_urls = $this->_craw_updated_urls($day_length);
+		if(!empty($updated_urls)){
+			foreach($updated_urls as $url){
+				$this->c_echo('find updated item :' . $url);
+				if($this->_craw_and_store($url, $wfp)){
+					$this->c_echo('success' . $url);
+				}else{
+					$this->c_echo('fail' . $url);
+				}
+			}
+		}else{
+			$this->log_error('craw nothing updated');
+		}
+
+		fclose($wfp);
+		$this->c_echo("end. cost " . (time() - $start_time));
 	}
 
 	/************************************************* private methods *************************************************************/
+
+	/**
+	 * 获取最近几天更新的条目
+	 * @param $day_length
+	 * @return array
+	 */
+	private function _craw_updated_urls($day_length){
+		$res = array();
+		if(!intval($day_length)){
+			return $res;
+		}
+
+		$days = array();
+		for($i = 0; $i < $day_length; $i++){
+			$days[] = date('m-d', time() - $i * 86400);
+		}
+
+		$html = $this->_get_film_html('http://www.loldytt.com/');
+		if(strlen($html) > 300){
+			$pattern = '#<li><p>(<em>)?(' . implode('|', $days) . ')([\s\S]*)</a></li>#U';
+			$matches = array();
+			preg_match_all($pattern, $html, $matches);
+			if(!empty($matches) && !empty($matches[0])){
+				$pattern = '#<a href="http://www.loldytt.com/([a-zA-Z/()0-9]*)">#U';
+				foreach($matches[0] as $part_html){
+					$matches = array();
+					preg_match($pattern, $part_html, $matches);
+					if(!empty($matches) && !empty($matches[1])){
+						$res[] = trim($matches[1], '/');
+					}
+				}
+			}
+		}
+
+		return $res;
+	}
 
 	/**
 	 * 爬取存储lol film
@@ -651,24 +718,20 @@ class Lol_dytt extends MY_Controller {
 			curl_setopt ($ch, CURLOPT_HTTPHEADER, $header);
 		}
 
-		$res  = curl_exec($ch);
-		$errno     = curl_errno($ch);
-		if($errno != 0){
-//			echo 'retry 1' . PHP_EOL;
+		$retry_times = 3;
+		while($retry_times > 0){
+			$retry_times--;
 			$res  = curl_exec($ch);
 			$errno     = curl_errno($ch);
-			if($errno != 0){
-//				echo 'retry 2' . PHP_EOL;
-				$res  = curl_exec($ch);
-				$errno     = curl_errno($ch);
+			$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			if($errno == 0 && strlen($res) > 300){
+				break;
 			}
 		}
-		$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		$errmsg    = (0 != $errno) ? curl_error($ch) : '';
 		curl_close($ch);
-
 //		echo $http_code . PHP_EOL. 'errno:' . $errno . PHP_EOL . $errmsg . PHP_EOL . $res;exit;
-		if($http_code != 200 || $errno != 0) {
+		if(strlen($res) < 300 || $errno != 0) {
+			$errmsg    = (0 != $errno) ? curl_error($ch) : '';
 			$this->log_error('curl fail.http code:' . $http_code .';errno:' .  $errno . ';errmsg:' . $errmsg . ';url:' . $url);
 			return '';
 		}else{

@@ -17,7 +17,7 @@ class Film_bt_model extends MY_Model {
 	}
 
 	function get_by_douban_id($douban_id){
-		$sql = "select * from " . $this->_table . " where douban_id = " . intval($douban_id);
+		$sql = "select bt.id, bt.batch_id, bt.`name`, bt.url, batch.type from film_bts bt left join film_bts_batch batch on bt.batch_id = batch.id where bt.douban_id = " . intval($douban_id);
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}
