@@ -96,7 +96,22 @@ class Film_model extends MY_Model {
 	}
 
 	public function query_by_actors_and_douban_id($douban_ids, $actor) {
-		$sql = "select * from film where douban_id in (". implode(',', $douban_ids) . ") and actors like '%" . $this->_get_db()->escape_str($actor) . "%';";
+		$sql = "select * from film where douban_id in (". implode(',', $douban_ids) . ") and actors like '%" . $this->_get_db()->escape_str($actor) . "%' ";
+
+		$query = $this->_get_db()->query($sql);
+		return $query->result_array();
+	}
+
+	public function query_by_director_and_douban_id($douban_ids, $director) {
+		$sql = "select * from film where douban_id in (". implode(',', $douban_ids) . ") and  director like '" . $this->_get_db()->escape_str($director) . "%';";
+
+		$query = $this->_get_db()->query($sql);
+		return $query->result_array();
+	}
+
+	public function query_by_year_and_douban_id($douban_ids, $year) {
+		$sql = "select * from film where douban_id in (". implode(',', $douban_ids) . ") and  `year`=" . intval($year);
+
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}

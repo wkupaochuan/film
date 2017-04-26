@@ -1,8 +1,26 @@
 <?php
 class Douban extends MY_Controller {
+
+	public function walk_douban($output_path)
+	{
+		$output_path = str_replace(':', '/', $output_path);
+		$wfp = fopen($output_path, 'w');
+		for($i = 0; $i < 100000000; $i++){
+			$url = "https://movie.douban.com/subject/{$i}/";
+			$html = $this->_request_douban($url);
+			if(strlen($html) < 300 || strpos($html, '你想访问的页面不存在') !== false) {
+				$this->c_echo('豆瓣页面不存在:' . $i);
+			}else{
+				$this->c_echo('success:' . $i);
+				fputs($wfp , $i . PHP_EOL);
+			}
+		}
+		fclose($wfp);
+	}
+
 	public function test(){
 		$page = 0;
-		$limit = 5;
+		$limit = 20;
 		$this->load->model('Film_model');
 		$this->load->model('Film_name_model');
 		while($page < 10000000){
@@ -27,16 +45,6 @@ class Douban extends MY_Controller {
 						'name' => $tmp['or_name'],
 						'douban_id' => $tmp['douban_id'],
 					));
-				}
-
-				if(!empty($tmp['other_names'])){
-					$other_names = json_decode($tmp['other_names'], true);
-					foreach($other_names as $name){
-						array_push($insert_data, array(
-							'name' => $name,
-							'douban_id' => $tmp['douban_id'],
-						));
-					}
 				}
 			}
 
@@ -71,104 +79,14 @@ class Douban extends MY_Controller {
 		}
 	}
 
-	public function import_dytt_bts($data_path, $output_path)
-	{
-		$data_path = str_replace(':', '/', $data_path);
-		$output_path = str_replace(':', '/', $output_path);
-		$rfp = fopen($data_path, 'r');
-		$wfp = fopen($output_path, 'w');
-		$this->load->model('Film_model');
-		$this->load->model('Film_bt_model');
-
-		$i = 0;
-		$find_none = $find_one = $find_multi = 0;
-		while(!feof($rfp)) {
-			if($i++ > 1000000) {
-				break;
-			}
-
-			$line = trim(fgets($rfp));
-			if(empty($line)) {
-				continue;
-			}
-
-			$data = json_decode($line, true);
-			if(empty($data) || !is_array($data)) {
-				$this->log_error('空:' . $line);
-			}
-
-			if(!empty($data['name'])) {
-				$actor_search = '';
-				if(!empty($data['actors'])){
-					$actors = explode('：', $data['actors']);
-					if(count($actors) == 2){
-						$actors = explode(' ', $actors[1]);
-						if(!empty($actors)) {
-							foreach($actors as $tmp){
-								if(!empty($tmp)) {
-									$actor_search = $tmp;
-									break;
-								}
-							}
-						}
-					}
-				}
-
-				$query_res = $this->_search_unique_film_by_name_actor($data['name'], $actor_search);
-				if(empty($query_res['count'])){
-					$find_none++;
-					echo 'none : ' . $data['name'] . ':' . $actor_search . PHP_EOL;
-					$data['find_count'] = 0;
-					fputs($wfp, json_encode($data) . PHP_EOL);
-				}else if($query_res['count'] == 1){
-					$find_one++;
-					$query_film = $query_res['film_detail'];
-					$insert_bts_array = array();
-					foreach($data['thunder'] as $bt){
-						array_push($insert_bts_array, array(
-							'douban_id' => $query_film['douban_id'],
-							'type' => 1,
-							'url' => $bt['link'],
-							'name' => $bt['title'],
-						));
-					}
-					foreach($data['bt'] as $bt){
-						array_push($insert_bts_array, array(
-							'douban_id' => $query_film['douban_id'],
-							'type' => 2,
-							'url' => $bt['link'],
-							'name' => $bt['title'],
-						));
-					}
-					foreach($data['magnet'] as $bt){
-						array_push($insert_bts_array, array(
-							'douban_id' => $query_film['douban_id'],
-							'type' => 3,
-							'url' => $bt['link'],
-							'name' => $bt['title'],
-						));
-					}
-					if(!empty($insert_bts_array)){
-						foreach($insert_bts_array as $bt){
-							if(empty($this->Film_bt_model->get_by_url($bt['url']))) {
-								$this->Film_bt_model->insert($bt);
-							}
-						}
-						$this->Film_model->update_loldytt_info($query_res['film_detail']['id'], $data);
-						echo 'success : ' . $query_res['film_detail']['douban_id'] . PHP_EOL;
-					}
-				}else {
-					$find_multi++;
-					echo 'multi : ' . $data['name'] . ':' . $actor_search . PHP_EOL;
-					$data['find_count'] = $query_res['count'];
-					fputs($wfp, json_encode($data) . PHP_EOL);
-				}
-			}
+	public function hand_process_douban($douban_ids){
+		if(empty($douban_ids)){
+			return;
 		}
-
-		fclose($rfp);
-		fclose($wfp);
-		echo $find_none . '-' . $find_one . '-' . $find_multi . PHP_EOL;
+		$douban_id_arr = explode(':', $douban_ids);
+		foreach($douban_id_arr as $douban_id){
+			$this->_craw_and_store_douban_film($douban_id);
+		}
 	}
 
 	/************************************************* private methods *************************************************************/
@@ -181,6 +99,7 @@ class Douban extends MY_Controller {
 	private function _craw_and_store_douban_film($douban_id){
 
 		$this->load->model('Film_model');
+		$this->load->model('Film_recom_model');
 		if(empty($this->Film_model->get_by_douban_id($douban_id))){
 			$douban_film_detail = $this->_craw_douban_detail($douban_id);
 
@@ -206,19 +125,29 @@ class Douban extends MY_Controller {
 			);
 
 			if($this->Film_model->insert($insert_film_data)){
+
 				// insert other names
+				$insert_names = array();
+				$insert_names[] = array(
+					'name' => $douban_film_detail['ch_name'],
+					'douban_id' => $douban_film_detail['id'],
+				);
+				if(!empty($douban_film_detail['or_name'])){
+					$insert_names[] = array(
+						'name' => $douban_film_detail['or_name'],
+						'douban_id' => $douban_film_detail['id'],
+					);
+				}
 				if(!empty($douban_film_detail['other_names'])){
-					$insert_names = array();
 					foreach($douban_film_detail['other_names'] as $name){
 						array_push($insert_names, array(
 							'name' => $name,
 							'douban_id' => $douban_film_detail['id'],
 						));
 					}
-
-					$this->load->model('Film_name_model');
-					$this->Film_name_model->insert_batch($insert_names);
 				}
+				$this->load->model('Film_name_model');
+				$this->Film_name_model->insert_batch($insert_names);
 
 				// handle pic
 				if(!empty($douban_film_detail['related_pics'])){
