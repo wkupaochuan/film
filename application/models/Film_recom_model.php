@@ -8,7 +8,7 @@ class Film_recom_model extends MY_Model {
 
 	function insert_batch($recoms)
 	{
-		$this->_get_db()->insert_batch($this->_table, $recoms);
+		$this->_insert_ignore_batch($this->_table, $recoms);
 	}
 
 	/**

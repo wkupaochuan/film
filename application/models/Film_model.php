@@ -118,12 +118,13 @@ class Film_model extends MY_Model {
 
 	public function update_by_douban_id($douban_id, $update_info){
 		if(empty($douban_id) || empty($update_info)){
-			return;
+			return false;
 		}
 		$where = array(
-			'douban_id' => $douban_id
+			'douban_id' => intval($douban_id)
 		);
 		$this->_get_db()->update($this->_table, $update_info, $where);
+		return $this->_get_db()->affected_rows();
 	}
 
 	public function get_recom_films($douban_id){
