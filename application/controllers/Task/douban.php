@@ -78,7 +78,50 @@ class Douban extends MY_Controller {
 		}
 	}
 
+	public function craw_daily(){
+		$url_arr = array(
+			"movive_recom" => "https://movie.douban.com/j/search_subjects?type=movie&tag=%E7%83%AD%E9%97%A8&sort=recommend&page_limit=20&page_start=0",
+			"movive_time" => "https://movie.douban.com/j/search_subjects?type=movie&tag=%E7%83%AD%E9%97%A8&sort=time&page_limit=20&page_start=0",
+			"tv_recom" => "https://movie.douban.com/j/search_subjects?type=tv&tag=%E7%83%AD%E9%97%A8&sort=recommend&page_limit=20&page_start=0",
+			"tv_time" => "https://movie.douban.com/j/search_subjects?type=tv&tag=%E7%83%AD%E9%97%A8&sort=time&page_limit=20&page_start=0",
+		);
+
+		foreach($url_arr as $key => $url){
+			$douban_ids = $this->_craw_updated_items($url);
+			$this->c_echo($key . ':' . implode(',', $douban_ids));
+			if(!empty($douban_ids)){
+				foreach($douban_ids as $douban_id){
+					if($this->_craw_and_store_douban_film($douban_id)){
+						$this->c_echo('success ' . $douban_id);
+					}else{
+						$this->c_echo('fail ' . $douban_id);
+					}
+				}
+			}
+		}
+	}
+
 	/************************************************* private methods *************************************************************/
+
+	/**
+	 * 获取更新的条目
+	 * @param $url
+	 * @return array
+	 */
+	private function _craw_updated_items($url){
+		$douban_ids = array();
+		$res_str = $this->_request_douban($url);
+		if(!empty($res_str)){
+			$items = json_decode($res_str, true);
+			if(!empty($items) && !empty($items['subjects'])){
+				foreach($items['subjects'] as $item){
+					$douban_ids[] = $item['id'];
+				}
+			}
+		}
+
+		return $douban_ids;
+	}
 
 	/**
 	 * 爬取并存储豆瓣电影(爬取、入库、处理图片、处理海报)

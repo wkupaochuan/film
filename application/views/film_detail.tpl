@@ -1,4 +1,14 @@
 <link rel="stylesheet" href="/resources/css/film_detail.css">
+
+<div style="padding: 10px 10px 10px;">
+	<form class="bs-example bs-example-form" role="form" name="dd" action="/film/index?" method="get">
+		<div class="input-group input-group-lg">
+			<input type="text" name="film_name" class="form-control" placeholder="肖申克的救赎" value="{$data.search_words}">
+			<span class="input-group-addon" onclick="javascript:dd.submit();" ><a>搜索</a></span>
+		</div>
+	</form>
+</div>
+
 <div id="content">
 	<h1>
 		<span >{$data.film_detail.ch_name} {$data.film_detail.or_name} ({$data.film_detail.year}) </span>

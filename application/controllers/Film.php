@@ -9,7 +9,7 @@ class Film extends MY_Controller {
 		$search_result = array();
 		if(!empty($search_words)) {
 			$this->load->model('Film_model');
-			$search_result = $this->Film_model->query_by_name($search_words);
+			$search_result = $this->Film_model->query_by_name_for_user_search($search_words);
 		}
 
 		if(!empty($search_result)) {

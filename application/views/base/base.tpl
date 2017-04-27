@@ -16,17 +16,21 @@
 
     <!-- Bootstrap -->
     <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!--百度统计-->
+    {if $ENV eq 'production'}
     {literal}
-    <script language="JavaScript" type="text/javascript">
-        var _hmt = _hmt || [];
-        (function() {
-            var hm = document.createElement("script");
-            hm.src = "https://hm.baidu.com/hm.js?bb663b6933fc393d2ae8876018a3ba0d";
-            var s = document.getElementsByTagName("script")[0];
-            s.parentNode.insertBefore(hm, s);
-        })();
-    </script>
+        <script language="JavaScript" type="text/javascript">
+            var _hmt = _hmt || [];
+            (function() {
+                var hm = document.createElement("script");
+                hm.src = "https://hm.baidu.com/hm.js?bb663b6933fc393d2ae8876018a3ba0d";
+                var s = document.getElementsByTagName("script")[0];
+                s.parentNode.insertBefore(hm, s);
+            })();
+        </script>
     {/literal}
+    {/if}
 </head>
 
 <body>

@@ -95,9 +95,9 @@ $db['development'] = array(
 );
 
 $db['production'] = array(
-	'hostname' => '10.138.64.157:2182',
-	'username' => 'skin',
-	'password' => '6a695c4702084b1e',
+	'hostname' => '127.0.0.1:3306',
+	'username' => 'root',
+	'password' => 'root',
 	'database' => 'skin',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',

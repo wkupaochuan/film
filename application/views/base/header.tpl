@@ -7,13 +7,10 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#">电影大观</a>
+      <a class="navbar-brand" href="/">电影大观</a>
     </div>
     <div id="navbar" class="collapse navbar-collapse">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#">下载</a></li>
-        <li><a href="#about">下载</a></li>
-        <li><a href="#contact">观看</a></li>
       </ul>
     </div>
   </div>

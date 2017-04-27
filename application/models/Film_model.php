@@ -6,10 +6,21 @@ class Film_model extends MY_Model {
 		parent::__construct();
 	}
 
-	public function query_by_name($search_words)
+	/**
+	 * 用户搜索专用
+	 * @param $search_words
+	 * @return mixed
+	 */
+	public function query_by_name_for_user_search($search_words)
 	{
 		$search_words = $this->_get_db()->escape_str($search_words);
-		$query = $this->_get_db()->query("select * from film where `ch_name` like '%{$search_words}%' ");
+		$sql = <<<SQL
+			select * from film WHERE douban_id IN (
+				select DISTINCT(douban_id) from film_names where `name` like '%{$search_words}%'
+			) AND download_able = 1 limit 0,20;
+SQL;
+
+		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}
 
