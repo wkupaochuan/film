@@ -5,27 +5,31 @@ class Film extends MY_Controller {
 
 	public function index()
 	{
-		$search_words = $this->input->get('film_name');
-		$search_result = array();
-		if(!empty($search_words)) {
-			$this->load->model('Film_model');
-			$search_result = $this->Film_model->query_by_name_for_user_search($search_words);
-		}
-
-		if(!empty($search_result)) {
-			foreach($search_result as &$tmp) {
-				$tmp['actors'] = str_replace(',', '/', $tmp['actors']);
-				$tmp['other_names'] = !empty($tmp['other_names'])? json_decode($tmp['other_names'], true):array();
-				$tmp['summary'] = mb_substr($tmp['summary'], 0, 100);
+		if($this->_from_spider()){
+			$this->home_for_spider();
+		}else{
+			$search_words = $this->input->get('film_name');
+			$search_result = array();
+			if(!empty($search_words)) {
+				$this->load->model('Film_model');
+				$search_result = $this->Film_model->query_by_name_for_user_search($search_words);
 			}
+
+			if(!empty($search_result)) {
+				foreach($search_result as &$tmp) {
+					$tmp['actors'] = str_replace(',', '/', $tmp['actors']);
+					$tmp['other_names'] = !empty($tmp['other_names'])? json_decode($tmp['other_names'], true):array();
+					$tmp['summary'] = mb_substr($tmp['summary'], 0, 100);
+				}
+			}
+
+			$this->assign('data', array(
+				'search_words' => $search_words,
+				'search_res' => $search_result,
+			));
+
+			$this->display('home.tpl');
 		}
-
-		$this->assign('data', array(
-			'search_words' => $search_words,
-			'search_res' => $search_result,
-		));
-
-		$this->display('home.tpl');
 	}
 
 	public function detail()
@@ -73,4 +77,17 @@ class Film extends MY_Controller {
 		$this->display('film_detail.tpl');
 	}
 
+	public function home_for_spider(){
+		$page = intval($this->input->get('page'));
+		if($page < 0) $page = 0;
+		$this->load->model('Film_model');
+		$films = $this->Film_model->get($page * 20, 20);
+		$this->assign('data', array(
+			'last' => ($page - 1) > 0?  ($page - 1):0,
+			'next' => $page + 1,
+			'search_res' => $films,
+		));
+
+		$this->display('home_for_spider.tpl');
+	}
 }

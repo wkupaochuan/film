@@ -14,4 +14,9 @@ class MY_Controller extends CI_Controller {
 		$this->cismarty->assign('content_html',$html);
 		$this->cismarty->display('base/base.tpl');
 	}
+
+	protected function _from_spider(){
+		$ua = !empty($_SERVER['HTTP_USER_AGENT'])? strtolower($_SERVER['HTTP_USER_AGENT']):'';
+		return strpos($ua, 'spider') !== false;
+	}
 }
