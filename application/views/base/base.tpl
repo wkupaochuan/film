@@ -10,9 +10,22 @@
         {if $data.title ne ""}
             {$data.title}
         {else}
-            电影大观
+            电影大观_最新电影迅雷下载_bt种子下载
         {/if}
     </title>
+
+    {if $data.keywords ne ""}
+        <meta name="keywords" content="{$data.keywords}" />
+    {else}
+        <meta name="keywords" content="电影大观,最新电影,电影下载" />
+    {/if}
+
+    {if $data.description ne ""}
+        <meta name="description" content="{$data.description}" />
+    {else}
+        <meta name="description" content="" />
+    {/if}
+
 
     <!-- Bootstrap -->
     <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">

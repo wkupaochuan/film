@@ -71,7 +71,9 @@ class Film extends MY_Controller {
 		}
 
 		$this->assign('data', array(
-			'title' => $film_detail['ch_name'],
+			'title' => "<" . $film_detail['ch_name'] . ">电影迅雷下载 - BT种子下载 - 磁力链接下载",
+			'keywords' => $film_detail['ch_name'] . "迅雷下载," . $film_detail['ch_name'] . "," .$film_detail['ch_name'] . "bt种子下载" ,
+			'description' => "<{$film_detail['ch_name']}>是由" . $film_detail['actors'] . "等主演的电影, 电影大观为广大网友搜集提供" . $film_detail['ch_name'] . "迅雷下载和bt种子下载的资源，仅供学习.提供剧情介绍、豆瓣评分、豆瓣推荐等信息",
 			'film_detail' => $film_detail,
 		));
 		$this->display('film_detail.tpl');
