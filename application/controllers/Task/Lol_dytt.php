@@ -106,6 +106,24 @@ class Lol_dytt extends MY_Controller {
 		$this->c_echo("end. cost " . (time() - $start_time));
 	}
 
+	/**
+	 * php index.php Task Lol_dytt hand_process 'Anime:JJDJRDEJ' 26268494 ':home:wangchuanchuan:data:lol.lol'
+	 * 手动对应lol_url和豆瓣id
+	 * @param $lol_url
+	 * @param $douban_id
+	 * @param $output_path
+	 */
+	public function hand_process($lol_url, $douban_id, $output_path){
+		$output_path = str_replace(':', '/', $output_path);
+		$wfp = fopen($output_path, 'a+');
+		$lol_url = str_replace(':', '/', $lol_url);
+		$this->load->model('Film_model');
+
+		$this->Film_model->update_by_douban_id($douban_id, array('lol_url' => $lol_url));
+		$this->_craw_and_store($lol_url, $wfp);
+		fclose($wfp);
+	}
+
 	/************************************************* private methods *************************************************************/
 
 	/**
@@ -193,12 +211,7 @@ class Lol_dytt extends MY_Controller {
 					}
 
 					// update lol url
-					if(empty($db_film_detail['lol_url'])){
-						$this->Film_model->update_by_douban_id($db_film_detail['douban_id'], array(
-							'lol_url' => $url,
-							'download_able' => 1,
-						));
-					}else if($db_film_detail['lol_url'] != $url){
+					if(!empty($db_film_detail['lol_url']) && $db_film_detail['lol_url'] != $url){
 						// 错误
 						$film_detail['query_count'] = $query_res['count'];
 						$film_detail['multi'] = 1;
@@ -206,9 +219,14 @@ class Lol_dytt extends MY_Controller {
 						fputs($wfp, json_encode($film_detail) . PHP_EOL);
 						$this->log_error('duplicate resources');
 						return false;
+					}else{
+						$this->Film_model->update_by_douban_id($db_film_detail['douban_id'], array(
+							'lol_url' => $url,
+							'download_able' => 1,
+						));
 					}
 
-					// process bts
+						// process bts
 					$this->_store_bts($film_detail, $db_film_detail['douban_id']);
 				}
 			}
@@ -679,63 +697,5 @@ class Lol_dytt extends MY_Controller {
 
 	private function log_error($msg, $function = 0, $line = 0){
 		$this->c_echo('user error :on function ' . $function . ' line ' . $line . ':' . $msg);
-	}
-
-	private function _curl($url, $post_data = array(), $cookie_jar = '', $header = array()){
-		$proxy = array();
-		$proxy_array = array(
-			array(
-				'ip' => '111.13.7.119',
-				'port' => '8080',
-			),
-			array(
-				'ip' => '111.13.2.131',
-				'port' => '80',
-			),
-		);
-		if(($rand = rand(0, count($proxy_array))) < count($proxy_array)){
-			$proxy = $proxy_array[$rand];
-		}
-
-		$ch = curl_init();
-		if(!empty($proxy)){
-			curl_setopt($ch,CURLOPT_PROXY, $proxy['ip']);
-			curl_setopt($ch,CURLOPT_PROXYPORT, $proxy['port']);
-		}
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-		if(!empty($post_data)) {
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-		}
-		if(!empty($cookie_jar)) {
-			curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_jar);
-			curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_jar);
-		}
-		if(!empty($header)){
-			curl_setopt ($ch, CURLOPT_HTTPHEADER, $header);
-		}
-
-		$retry_times = 3;
-		while($retry_times > 0){
-			$retry_times--;
-			$res  = curl_exec($ch);
-			$errno     = curl_errno($ch);
-			$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			if($errno == 0 && strlen($res) > 300){
-				break;
-			}
-		}
-		curl_close($ch);
-//		echo $http_code . PHP_EOL. 'errno:' . $errno . PHP_EOL . $errmsg . PHP_EOL . $res;exit;
-		if(strlen($res) < 300 || $errno != 0) {
-			$errmsg    = (0 != $errno) ? curl_error($ch) : '';
-			$this->log_error('curl fail.http code:' . $http_code .';errno:' .  $errno . ';errmsg:' . $errmsg . ';url:' . $url);
-			return '';
-		}else{
-			return $res;
-		}
 	}
 }

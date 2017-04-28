@@ -53,7 +53,15 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+
+//define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+
+$uname = posix_uname();
+if(!empty($uname) && strpos($uname['nodename'], 'qihoo') !== false){
+	define('ENVIRONMENT', 'development');
+}else{
+	define('ENVIRONMENT', 'production');
+}
 
 /*
  *---------------------------------------------------------------
