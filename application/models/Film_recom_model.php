@@ -1,6 +1,6 @@
 <?php
 class Film_recom_model extends MY_Model {
-	private $_table = 'film_recom';
+	protected $_table = 'film_recom';
 	function __construct()
 	{
 		parent::__construct();

@@ -1,6 +1,6 @@
 <?php
 class Film_model extends MY_Model {
-	private $_table = 'film';
+	protected $_table = 'film';
 	function __construct()
 	{
 		parent::__construct();
@@ -138,6 +138,17 @@ SQL;
 		return $this->_get_db()->affected_rows();
 	}
 
+	public function update_by_id($id, $update_info){
+		if(empty($id) || empty($update_info)){
+			return false;
+		}
+		$where = array(
+			'id' => intval($id)
+		);
+		$this->_get_db()->update($this->_table, $update_info, $where);
+		return $this->_get_db()->affected_rows();
+	}
+
 	public function get_recom_films($douban_id){
 		$douban_id = intval($douban_id);
 		$sql = <<<SQL
@@ -154,5 +165,17 @@ SQL;
 		$url = $this->_get_db()->escape($url);
 		$sql = "select * from {$this->_table} where `lol_url` = {$url}";
 		return $this->_c_query_unique($sql);
+	}
+
+	public function query_by_genre($genre, $offset, $limit)
+	{
+		$genre = intval($genre);
+		if(empty($genre) || $genre < 2){
+			$sql = "select * from `film` where download_able = 1 order by `year` desc limit {$offset},{$limit}";
+		}else{
+			$sql = "select * from `film` where  download_able = 1 and `genre_p`%{$genre}=0 order by `year` desc limit {$offset},{$limit}";
+		}
+
+		return $this->_c_query($sql);
 	}
 }

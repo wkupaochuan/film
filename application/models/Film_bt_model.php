@@ -1,6 +1,6 @@
 <?php
 class Film_bt_model extends MY_Model {
-	private $_table = 'film_bts';
+	protected $_table = 'film_bts';
 	function __construct()
 	{
 		parent::__construct();

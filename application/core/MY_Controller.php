@@ -2,6 +2,7 @@
 class MY_Controller extends CI_Controller {
 	public function __construct() {
 		parent::__construct();
+		$this->_load_data();
 	}
 
 	public function assign($key, $val) {
@@ -101,5 +102,16 @@ class MY_Controller extends CI_Controller {
 		}
 		$this->load->model('Film_name_model');
 		$this->Film_name_model->insert_batch($insert_names);
+	}
+
+	private function _load_data(){
+		// 加载电影类型
+		$this->load->Model('Genre_model');
+		$db_genre_dic = $this->Genre_model->get_all_genre();
+		$genre_dic = array();
+		foreach($db_genre_dic as $tmp){
+			$genre_dic[$tmp['desc']] = $tmp;
+		}
+		$this->config->set_item('film_genre_dic', $genre_dic);
 	}
 }

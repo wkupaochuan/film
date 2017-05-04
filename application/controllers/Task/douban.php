@@ -6,7 +6,14 @@ class Douban extends MY_Controller {
 		$limit = 20;
 		$this->load->model('Film_model');
 		$this->load->model('Film_name_model');
-		while($page < 10000000){
+		$this->load->model('Genre_model');
+
+		$db_genre_dic = $this->Genre_model->get_all_genre();
+		$genre_dic = array();
+		foreach($db_genre_dic as $tmp){
+			$genre_dic[$tmp['desc']] = $tmp;
+		}
+		while($page < 100000){
 			$films = $this->Film_model->get($page++ * $limit, $limit);
 			if(empty($films)){
 				echo 'end ' . $page . PHP_EOL;
@@ -15,24 +22,30 @@ class Douban extends MY_Controller {
 
 			echo $page . PHP_EOL;
 
-			$insert_data = array();
 			foreach($films as $tmp){
-				if(!empty($tmp['ch_name'])){
-					array_push($insert_data, array(
-						'name' => $tmp['ch_name'],
-						'douban_id' => $tmp['douban_id'],
-					));
-				}
-				if(!empty($tmp['or_name'])){
-					array_push($insert_data, array(
-						'name' => $tmp['or_name'],
-						'douban_id' => $tmp['douban_id'],
-					));
-				}
-			}
+				if(!empty($tmp['genre']) && $tmp['genre_p'] == 1){
+					$film_id = $tmp['id'];
+					$genre_p = 1;
+					$genre_content_arr = explode(',', $tmp['genre']);
+					if(!empty($genre_content_arr)){
+						foreach($genre_content_arr as $g_c){
+							if(empty($genre_dic[$g_c])){
+								$xx = end($genre_dic);
+								$g_dic = array(
+									'genre_id' => empty($genre_dic)? get_closest_prime(0):get_closest_prime($xx['genre_id']),
+									'desc' => $g_c,
+								);
+								$this->Genre_model->insert($g_dic);
+								$genre_dic[$g_c] = $g_dic;
+							}
+							$genre_p *= $genre_dic[$g_c]['genre_id'];
+						}
+					}
 
-			if(!empty($insert_data)){
-				$this->Film_name_model->insert_batch($insert_data);
+					if($genre_p > 1){
+						$this->Film_model->update_by_id($film_id, array('genre_p' => $genre_p));
+					}
+				}
 			}
 		}
 	}
@@ -145,11 +158,11 @@ class Douban extends MY_Controller {
 			'douban_id' => $douban_film_detail['id'],
 			'ch_name' => !empty($douban_film_detail['ch_name'])? $douban_film_detail['ch_name']:'',
 			'or_name' => !empty($douban_film_detail['or_name'])? $douban_film_detail['or_name']:'',
-//			'other_names' => !empty($douban_film_detail['other_names'])? json_encode($douban_film_detail['other_names']):'',
 			'year' => !empty($douban_film_detail['year'])? $douban_film_detail['year']:'',
 			'director' => !empty($douban_film_detail['director'])? $douban_film_detail['director']:'',
 			'actors' => !empty($douban_film_detail['actors'])? implode(',', $douban_film_detail['actors']):'',
 			'genre' => !empty($douban_film_detail['genre'])? implode(',', $douban_film_detail['genre']):'',
+			'genre_p' => !empty($douban_film_detail['genre'])? $this->_cal_genre_product($douban_film_detail['genre']):1,
 			'runtime' => !empty($douban_film_detail['runtime'])? $douban_film_detail['runtime']:'',
 			'douban_rate' => !empty($douban_film_detail['rate'])? $douban_film_detail['rate']:'',
 			'summary' => !empty($douban_film_detail['summary'])? $douban_film_detail['summary']:'',
@@ -192,6 +205,37 @@ class Douban extends MY_Controller {
 		}
 
 		return true;
+	}
+
+	/**
+	 * 计算类型乘积
+	 * @param $genre_desc_arr
+	 * @return int
+	 */
+	private function _cal_genre_product($genre_desc_arr){
+		$genre_p = 1;
+		if(empty($genre_desc_arr)){
+			return $genre_p;
+		}
+
+		$this->load->Model('Genre_model');
+		$genre_dic = $this->config->item('film_genre_dic');
+		foreach($genre_desc_arr as $genre_desc){
+			if(empty($genre_dic[$genre_desc])){
+				$xx = end($genre_dic);
+				$g_dic = array(
+					'genre_id' => empty($genre_dic)? get_closest_prime(0):get_closest_prime($xx['genre_id']),
+					'desc' => $genre_desc,
+				);
+				$this->Genre_model->insert($g_dic);
+				$genre_dic[$genre_desc] = $g_dic;
+			}
+			$genre_p *= $genre_dic[$genre_desc]['genre_id'];
+		}
+
+		$this->config->set_item('film_genre_dic', $genre_dic);
+
+		return $genre_p;
 	}
 
 	/**
@@ -612,70 +656,6 @@ class Douban extends MY_Controller {
 			'Referer:http://movie.douban.com/',
 			'Cache-Control:max-age=0',
 		);
-
-		$proxy_array = array(
-			array(
-				'ip' => '111.13.7.119',
-				'port' => '8080',
-			),
-			array(
-				'ip' => '111.13.2.131',
-				'port' => '80',
-			),
-		);
-
-		$proxy = array();
-		if(($rand = rand(0, count($proxy_array))) < count($proxy_array)){
-			$proxy = $proxy_array[$rand];
-		}
-
-		return $this->_curl($url, null, $cookie_file_path, $header, $proxy);
-	}
-
-	private function _curl($url, $post_data, $cookie_jar, $header, $proxy){
-		$ch = curl_init();
-		if(!empty($proxy)){
-			curl_setopt($ch,CURLOPT_PROXY, $proxy['ip']);
-			curl_setopt($ch,CURLOPT_PROXYPORT, $proxy['port']);
-		}
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-		if(!empty($post_data)) {
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-		}
-		if(!empty($cookie_jar)) {
-			curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_jar);
-			curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_jar);
-		}
-		if(!empty($header)){
-			curl_setopt ($ch, CURLOPT_HTTPHEADER, $header);
-		}
-
-		$res  = curl_exec($ch);
-		$errno     = curl_errno($ch);
-		if($errno != 0){
-//			echo 'retry 1' . PHP_EOL;
-			$res  = curl_exec($ch);
-			$errno     = curl_errno($ch);
-			if($errno != 0){
-//				echo 'retry 2' . PHP_EOL;
-				$res  = curl_exec($ch);
-				$errno     = curl_errno($ch);
-			}
-		}
-		$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		$errmsg    = (0 != $errno) ? curl_error($ch) : '';
-		curl_close($ch);
-
-//		echo $http_code . PHP_EOL. 'errno:' . $errno . PHP_EOL . $errmsg . PHP_EOL . $res;exit;
-		if($http_code != 200 || $errno != 0) {
-			$this->log_error('curl fail.http code:' . $http_code .';errno:' .  $errno . ';errmsg:' . $errmsg . ';url:' . $url);
-			return '';
-		}else{
-			return $res;
-		}
+		return $this->_curl($url, null, $cookie_file_path, $header);
 	}
 }

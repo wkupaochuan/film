@@ -1,6 +1,6 @@
 <?php
 class Lol_recom_model extends MY_Model {
-	private $_table = 'lol_recom';
+	protected $_table = 'lol_recom';
 	function __construct()
 	{
 		parent::__construct();
