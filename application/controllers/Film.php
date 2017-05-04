@@ -14,9 +14,9 @@ class Film extends MY_Controller {
 
 		if(!empty($search_result)) {
 			foreach($search_result as &$tmp) {
-				$tmp['actors'] = str_replace(',', '/', $tmp['actors']);
+				$tmp['actors'] = implode('/', array_slice(explode(',', $tmp['actors']), 0, 3));
 				$tmp['other_names'] = !empty($tmp['other_names'])? json_decode($tmp['other_names'], true):array();
-				$tmp['summary'] = mb_substr($tmp['summary'], 0, 100);
+				$tmp['summary'] = trim(mb_substr($tmp['summary'], 0, 100));
 			}
 		}
 

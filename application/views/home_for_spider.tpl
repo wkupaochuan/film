@@ -43,10 +43,20 @@
 		{/foreach}
 	{/if}
 		<li class="list-group-item">
-			<div class="panel-heading">
-				<a href="/film/film_list?genre={$data.genre}&page={$data.last}"><p>上一页</p></a>
-				<a href="/film/film_list?genre={$data.genre}&page={$data.next}"><p>下一页</p></a>
-			</div>
+			<nav aria-label="Page navigation">
+				<ul class="pagination">
+					<li>
+						<a href="/film/film_list?genre={$data.genre}&page={$data.last}" aria-label="上一页">
+							上一页
+						</a>
+					</li>
+					<li>
+						<a href="/film/film_list?genre={$data.genre}&page={$data.next}" aria-label="下一页">
+							下一页
+						</a>
+					</li>
+				</ul>
+			</nav>
 		</li>
 	</ul>
 
