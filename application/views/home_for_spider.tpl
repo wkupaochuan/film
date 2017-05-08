@@ -17,7 +17,7 @@
 			<li class="list-group-item">
 				<div class="row">
 					<div class="col-xs-1 col-md-1">
-						<a href="/film/detail?id={$film.id}">
+						<a href="/film/detail?id={$film.id}" title="{$film.ch_name}">
 							{if $film.b_post_cover ne ''}
 								<img style="max-width: 100%" src="{$PIC_HOST}{$film.b_post_cover}" />
 							{elseif $recom_film.l_post_cover ne ''}

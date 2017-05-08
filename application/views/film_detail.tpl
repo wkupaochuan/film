@@ -134,6 +134,7 @@
 
 
 		<!--获奖-->
+		<!--
 		<div class="mod">
 			<div class="hd">
 				<h4><i class="">当幸福来敲门的获奖情况</i> · · · · · · </h4>
@@ -162,6 +163,7 @@
 				<li><a href='https://movie.douban.com/celebrity/1010532/' target='_blank'>贾登·史密斯</a></li>
 			</ul>
 		</div>
+		-->
 
 		<!--类似推荐-->
 		{if count($data.film_detail.recom_films) gt 0}
@@ -171,7 +173,7 @@
 					{foreach from=$data.film_detail.recom_films item=recom_film}
 						<dl >
 							<dt>
-								<a href="/film/detail?id={$recom_film.id}');" >
+								<a href="/film/detail?id={$recom_film.id}')" title="{$recom_film.ch_name}">
 									{if $recom_film.b_post_cover ne ''}
 										<img style="max-width: 100%" src="{$PIC_HOST}{$recom_film.b_post_cover}" />
 									{elseif $recom_film.l_post_cover ne ''}
@@ -182,7 +184,7 @@
 								</a>
 							</dt>
 							<dd>
-								<a href="https://movie.douban.com/subject/1292720/?from=subject-page" class="" >{$recom_film.ch_name}</a>
+								<a href="/film/detail?id={$recom_film.id}')" class="" >{$recom_film.ch_name}</a>
 							</dd>
 						</dl>
 					{/foreach}
