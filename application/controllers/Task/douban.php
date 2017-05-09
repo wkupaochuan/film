@@ -640,11 +640,10 @@ class Douban extends MY_Controller {
 	 */
 	private function _request_douban($url){
 		$cookie_file_path = './douban_cookie.txt';
-		$cookie_ttl_file_path = './douban_cookie_ttl.txt';
-		$start_time = file_get_contents($cookie_ttl_file_path);
-		if((time() - $start_time) > 3) {
+		static $cookie_time;
+		if(empty($cookie_time) || (time() - $cookie_time) > 3){
+			$cookie_time = time();
 			file_put_contents($cookie_file_path, '');
-			file_put_contents($cookie_ttl_file_path, time());
 		}
 
 		$header = array(
