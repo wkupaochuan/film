@@ -36,11 +36,13 @@ class Douban extends MY_Controller {
 		$limit = 10;
 		$this->load->model('Film_model');
 		$this->load->model('Film_recom_model');
+		$this->load->model('Un_douban_model');
 		while($page++ < 10000000){
-			$un_crawed_douban_ids = $this->Film_recom_model->get_un_crawed_douban_ids(0, $limit);
+			$un_crawed_douban_ids = $this->Un_douban_model->get($page * $limit, $limit);
 			if(empty($un_crawed_douban_ids)){
 				echo 'end ' . $page . PHP_EOL;
-				break;
+				// 重新开始
+				$page = 0;
 			}
 
 			foreach($un_crawed_douban_ids as $tmp){
@@ -49,7 +51,6 @@ class Douban extends MY_Controller {
 				if($this->_craw_and_store_douban_film($douban_id)){
 					echo 'success:' . $douban_id . PHP_EOL;
 				}else{
-					$this->Film_recom_model->incr_invalid_times($douban_id);
 					echo 'fail:' . $douban_id . PHP_EOL;
 				}
 			}
@@ -193,6 +194,12 @@ class Douban extends MY_Controller {
 				$this->load->service('Film_recom_service');
 				$this->Film_recom_service->process_douban_recom($film_id, $douban_film_detail['recomm_ids']);
 			}
+
+			// 标记已抓取
+			$this->load->service('Film_recom_service');
+			$this->Film_recom_service->up_un_douban($douban_id);
+		}else{
+			return false;
 		}
 
 		return true;
@@ -240,10 +247,19 @@ class Douban extends MY_Controller {
 		if(empty($douban_id)) {
 			return $ret;
 		}
+
 		//$html = file_get_contents('/home/wangchuanchuan/tmp/douban_detail.html');
 		$douban_link = "https://movie.douban.com/subject/{$douban_id}/";
-		$html = $this->_request_douban($douban_link);
-
+		$retry = 3;
+		$html = '';
+		while($retry--){
+			$html = $this->_request_douban($douban_link);
+			if(strlen($html) < 300 || strpos($html, '你想访问的页面不存在') !== false) {
+				continue;
+			}else{
+				break;
+			}
+		}
 		if(strlen($html) < 300 || strpos($html, '你想访问的页面不存在') !== false) {
 			$this->_log_error('豆瓣页面不存在:' . $douban_id);
 			return $ret;
@@ -480,9 +496,15 @@ class Douban extends MY_Controller {
 	 * @return mixed|string
 	 */
 	private function _request_douban($url){
+		static $r_time;
+		$s_intval = rand(1,5);
+		if(empty($r_time) || (time() - $r_time) > $s_intval ){
+			sleep(1);
+		}
+
 		$cookie_file_path = './douban_cookie.txt';
 		static $cookie_time;
-		if(empty($cookie_time) || (time() - $cookie_time) > 3){
+		if(empty($cookie_time) || (time() - $cookie_time) > 8){
 			$cookie_time = time();
 			file_put_contents($cookie_file_path, '');
 		}

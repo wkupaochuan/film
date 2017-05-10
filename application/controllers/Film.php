@@ -7,9 +7,15 @@ class Film extends MY_Controller {
 	{
 		$search_words = $this->input->get('film_name');
 		$search_result = array();
+		$tpl = '';
 		if(!empty($search_words)) {
+			$tpl = 'search_home.tpl';
 			$this->load->model('Film_model');
 			$search_result = $this->Film_model->query_by_name_for_user_search($search_words);
+		}else{
+			$tpl = 'home.tpl';
+			$this->load->service('Film_service');
+			$search_result = $this->Film_service->get_up_films(strtotime(date('Y-m-d', time() - 86400)));
 		}
 
 		if(!empty($search_result)) {
@@ -25,7 +31,8 @@ class Film extends MY_Controller {
 			'search_res' => $search_result,
 		));
 
-		$this->display('home.tpl');
+
+		$this->display($tpl);
 	}
 
 	public function detail()

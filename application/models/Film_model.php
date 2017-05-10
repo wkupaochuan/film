@@ -36,6 +36,18 @@ SQL;
 		return $query->result_array();
 	}
 
+	function get_by_ids($film_ids)
+	{
+		if(empty($film_ids)) {
+			return array();
+		}
+		foreach($film_ids as &$id) {
+			$id = intval($id);
+		}
+		$sql = "select * from film where id in ( " . implode(',', $film_ids) . ")";
+		return $this->_c_query($sql);
+	}
+
 	function get_by_douban_id($douban_id)
 	{
 		$douban_id = intval($douban_id);

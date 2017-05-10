@@ -9,50 +9,36 @@
 
 <div class="panel">
 	<div class="panel-heading">
-		<h3 class="panel-title">搜索结果</h3>
+		<h3 class="panel-title">最近更新</h3>
 	</div>
+
 	{if count($data.search_res) gt 0 }
-		<ul class="list-group">
-			{foreach from=$data.search_res item=film}
-				<li class="list-group-item">
+			<div class="container">
+			{foreach from=$data.search_res key=index item=film}
+				{if $index%6 eq 0 }
 					<div class="row">
-						<div class="col-sm-1 col-md-1">
-							<a href="/film/detail?id={$film.id}" title="{$film.ch_name}">
-								{if $film.b_post_cover ne ''}
-									<img style="max-width: 100%" src="{$PIC_HOST}{$film.b_post_cover}" alt="{$film.ch_name}海报" />
-								{elseif $recom_film.l_post_cover ne ''}
-									<img style="max-width: 100%" src="{$PIC_HOST}{$film.l_post_cover}" alt="{$film.ch_name}海报"　/>
-								{else}
-									<img style="max-width: 100%" src="{$film.douban_post_cover}" alt="{$film.ch_name}海报"/>
-								{/if}
-							</a>
-						</div>
-						<div class="col-sm-1 col-md-1" style="width: 900px;">
-							<div class="row">
-								<p>{$film.ch_name} {$film.or_name}  ({$film.year})</p>
-							</div>
-							{if count($film.other_names) gt 0}
-								<div class="row">
-									<p>又名:
-										{foreach from=$film.other_names item=name}
-											{$name}/
-										{/foreach}
-									</p>
+				{/if}
+						<div class="col-md-2">
+							<div class="thumbnail">
+								<a href="/film/detail?id={$film.id}" title="{$film.ch_name}">
+									{if $film.b_post_cover ne ''}
+										<img class="img-responsive"  src="{$PIC_HOST}{$film.b_post_cover}" alt="{$film.ch_name}海报" />
+									{elseif $recom_film.l_post_cover ne ''}
+										<img class="img-responsive"  src="{$PIC_HOST}{$film.l_post_cover}" alt="{$film.ch_name}海报"　/>
+									{else}
+										<img class="img-responsive" src="{$film.douban_post_cover}" alt="{$film.ch_name}海报"/>
+									{/if}
+								</a>
+								<div class="caption">
+									<p><a href="/film/detail?id={$film.id}')" class="" >{$film.ch_name}</a></p>
 								</div>
-							{/if}
-							<div class="row">
-								<p>导演:{$film.director}</p>
-							</div>
-							<div class="row">
-								<p>演员: {$film.actors}</p>
-							</div>
-							<div class="row">
-								<p>简介: {$film.summary}</p>
+								<p></p>
 							</div>
 						</div>
+				{if ($index+1)%6 eq 0 }
 					</div>
-				</li>
+				{/if}
 			{/foreach}
-		</ul>
+			</div>
 	{/if}
 </div>
