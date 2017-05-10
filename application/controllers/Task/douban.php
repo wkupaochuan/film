@@ -6,15 +6,13 @@ class Douban extends MY_Controller {
 		$limit = 20;
 		$this->load->model('Film_model');
 		$this->load->model('Film_name_model');
-		$this->load->model('Genre_model');
+		$this->load->model('Film_bt_model');
+		$this->load->model('Film_pic_model');
+		$this->load->model('Film_recom_model');
 
-		$db_genre_dic = $this->Genre_model->get_all_genre();
-		$genre_dic = array();
-		foreach($db_genre_dic as $tmp){
-			$genre_dic[$tmp['desc']] = $tmp;
-		}
 		while($page < 100000){
 			$films = $this->Film_model->get($page++ * $limit, $limit);
+
 			if(empty($films)){
 				echo 'end ' . $page . PHP_EOL;
 				break;
@@ -23,29 +21,12 @@ class Douban extends MY_Controller {
 			echo $page . PHP_EOL;
 
 			foreach($films as $tmp){
-				if(!empty($tmp['genre']) && $tmp['genre_p'] == 1){
-					$film_id = $tmp['id'];
-					$genre_p = 1;
-					$genre_content_arr = explode(',', $tmp['genre']);
-					if(!empty($genre_content_arr)){
-						foreach($genre_content_arr as $g_c){
-							if(empty($genre_dic[$g_c])){
-								$xx = end($genre_dic);
-								$g_dic = array(
-									'genre_id' => empty($genre_dic)? get_closest_prime(0):get_closest_prime($xx['genre_id']),
-									'desc' => $g_c,
-								);
-								$this->Genre_model->insert($g_dic);
-								$genre_dic[$g_c] = $g_dic;
-							}
-							$genre_p *= $genre_dic[$g_c]['genre_id'];
-						}
-					}
-
-					if($genre_p > 1){
-						$this->Film_model->update_by_id($film_id, array('genre_p' => $genre_p));
-					}
-				}
+				$film_id = $tmp['id'];
+				$douban_id = $tmp['douban_id'];
+				$this->Film_bt_model->update_by_douban_id($douban_id, $film_id);
+				$this->Film_name_model->update_by_douban_id($douban_id, $film_id);
+				$this->Film_pic_model->update_by_douban_id($douban_id, $film_id);
+				$this->Film_recom_model->update_by_douban_id($douban_id, $film_id);
 			}
 		}
 	}
@@ -101,13 +82,13 @@ class Douban extends MY_Controller {
 
 		foreach($url_arr as $key => $url){
 			$douban_ids = $this->_craw_updated_items($url);
-			$this->c_echo($key . ':' . implode(',', $douban_ids));
+			$this->_c_echo($key . ':' . implode(',', $douban_ids));
 			if(!empty($douban_ids)){
 				foreach($douban_ids as $douban_id){
 					if($this->_craw_and_store_douban_film($douban_id)){
-						$this->c_echo('success ' . $douban_id);
+						$this->_c_echo('success ' . $douban_id);
 					}else{
-						$this->c_echo('fail ' . $douban_id);
+						$this->_c_echo('fail ' . $douban_id);
 					}
 				}
 			}
@@ -143,13 +124,14 @@ class Douban extends MY_Controller {
 	 */
 	private function _craw_and_store_douban_film($douban_id){
 		$this->load->model('Film_model');
+		$this->load->service('Film_service');
 
 		$db_film_detail = $this->Film_model->get_by_douban_id($douban_id);
 
 		// 爬取
 		$douban_film_detail = $this->_craw_douban_detail($douban_id);
 		if(empty($douban_film_detail)){
-			$this->log_error('craw get nothing from ' . $douban_id);
+			$this->_log_error('craw get nothing from ' . $douban_id);
 			return false;
 		}
 
@@ -170,13 +152,19 @@ class Douban extends MY_Controller {
 			'recom_douban_id' => !empty($douban_film_detail['recomm_ids'])? implode(',', $douban_film_detail['recomm_ids']):'',
 		);
 
+		$film_id = null;
 		if(empty($db_film_detail)){
-			$affect_rows = $this->Film_model->insert($insert_film_data);
+			$film_id = $this->Film_model->insert($insert_film_data);
+			if(empty($film_id)){
+				$this->_log_error('insert db fail ' . $douban_id);
+				return false;
+			}
 		}else{
-			$affect_rows = $this->Film_model->update_by_douban_id($douban_id, $insert_film_data);
+			$film_id = $db_film_detail['id'];
+			$this->Film_model->update_by_douban_id($douban_id, $insert_film_data);
 		}
 
-		if($affect_rows){
+		if($film_id){
 			// process names
 			$insert_names = array();
 			if(!empty($douban_film_detail['other_names'])){
@@ -186,21 +174,24 @@ class Douban extends MY_Controller {
 			if(!empty($douban_film_detail['or_name'])){
 				$insert_names[] = $douban_film_detail['or_name'];
 			}
-			$this->_process_film_names($douban_id, $insert_names);
+			$this->Film_service->process_film_names($film_id, $insert_names);
 
 			// handle pic
 			if(!empty($douban_film_detail['related_pics'])){
-				$this->_process_film_pics($douban_id,  $douban_film_detail['related_pics']);
+				$this->load->service('Film_pic_service');
+				$this->Film_pic_service->add_film_pics($film_id,  $douban_film_detail['related_pics']);
 			}
 
 			// handle post cover
 			if(!empty($douban_film_detail['post_cover'])){
-				$this->_update_post_cover($douban_id, $douban_film_detail['post_cover']);
+				$this->load->service('Film_pic_service');
+				$this->Film_pic_service->update_post_cover($film_id, $douban_film_detail['post_cover']);
 			}
 
 			// handle recom
 			if(!empty($douban_film_detail['recomm_ids'])){
-				$this->_process_film_recom($douban_id, $douban_film_detail['recomm_ids']);
+				$this->load->service('Film_recom_service');
+				$this->Film_recom_service->process_douban_recom($film_id, $douban_film_detail['recomm_ids']);
 			}
 		}
 
@@ -239,143 +230,6 @@ class Douban extends MY_Controller {
 	}
 
 	/**
-	 * 处理图片
-	 * @param $douban_id
-	 * @param $recom_ids
-	 */
-	private function _process_film_recom($douban_id, $recom_ids){
-		$insert_data = array();
-		$recom_douban_ids = array_unique($recom_ids);
-		foreach($recom_douban_ids as $tmp){
-			array_push($insert_data, array(
-				'douban_id' => $douban_id,
-				'recom_douban_id' => $tmp,
-			));
-		}
-
-		if(!empty($insert_data)){
-			$this->load->model('Film_recom_model');
-			$this->Film_recom_model->insert_batch($insert_data);
-		}
-	}
-
-	/**
-	 * 处理图片
-	 * @param $douban_id
-	 * @param $pics
-	 */
-	private function _process_film_pics($douban_id, $pics){
-		$this->load->model('Film_pic_model');
-		$exist_file_names = $this->Film_pic_model->get_pics_by_douban_id($douban_id);
-		$exist_file_names = array_column($exist_file_names, 'file_name');
-
-		foreach($pics as $pic_url){
-			if(!empty($pic_url) && !in_array(substr($pic_url, strrpos($pic_url, '/') + 1), $exist_file_names)){
-				$this->_down_and_store_film_pic($douban_id, $pic_url);
-			}
-		}
-	}
-
-	/**
-		 * 更新封面(下载、上传、更新db)
-		 * @param $douban_id
-		 * @param $douban_post_cover_link
-		 * @return bool|void
-		 */
-	private function _update_post_cover($douban_id, $douban_post_cover_link)
-	{
-		if(empty($douban_id) || empty($douban_post_cover_link)){
-			return false;
-		}
-		$this->load->model('Film_model');
-		$down_pic_url = str_replace('https', 'http', $douban_post_cover_link);
-		$down_pic_file_name = substr($douban_post_cover_link, strrpos($douban_post_cover_link, '/') + 1);
-
-		$b_down_pic_url = $l_down_pic_url  = '';
-		if(strpos($down_pic_url, 'ipst') !== false || strpos($down_pic_url, 'lpst') !== false ){
-			$b_down_pic_url = str_replace('ipst', 'lpst', $down_pic_url);
-			$l_down_pic_url = str_replace('lpst', 'ipst', $down_pic_url);
-		}else if(strpos($down_pic_url, 'lpic') !== false || strpos($down_pic_url, 'spic') !== false){
-			$b_down_pic_url = str_replace('spic', 'lpic', $down_pic_url);
-			$l_down_pic_url = str_replace('lpic', 'spic', $down_pic_url);
-		}else if(strpos($down_pic_url, '_default_') !== false){
-			$update_info = array('b_post_cover' => 'movie_default_large.png');
-			$this->Film_model->update_by_douban_id($douban_id, $update_info);
-			$update_info = array('l_post_cover' => 'movie_default_small.png');
-			$this->Film_model->update_by_douban_id($douban_id, $update_info);
-			return true;
-		}
-
-		if(!empty($b_down_pic_url)){
-			$pending_down_content = array(
-				array(
-					'type' => 1,
-					'url' => $b_down_pic_url,
-					'file_name' => 'pcl_' . $down_pic_file_name,
-				),
-				array(
-					'type' => 2,
-					'url' => $l_down_pic_url,
-					'file_name' => 'pci_' . $down_pic_file_name,
-				)
-			);
-
-			foreach($pending_down_content as $tmp){
-				$down_pic_url = $tmp['url'];
-				$down_pic_file_full_path = '/tmp/' . $tmp['file_name'];
-				$cmd = "wget -q {$down_pic_url} -O $down_pic_file_full_path";
-				exec($cmd);
-				if(file_exists($down_pic_file_full_path) && filesize($down_pic_file_full_path) > 10) {
-					// 上传
-					if($this->qiniu->upload($down_pic_file_full_path, $tmp['file_name'])){
-						$update_info = $tmp['type'] == 1?  array('b_post_cover' => $tmp['file_name'],):array('l_post_cover' => $tmp['file_name'],);
-						$this->Film_model->update_by_douban_id($douban_id, $update_info);
-					}else{
-						$this->log_error('upload fail:' . $douban_id);
-					}
-					@unlink($down_pic_file_full_path);
-				}else{
-					$this->log_error('download fail:' . $douban_id . ':' . $down_pic_url);
-				}
-			}
-
-			return true;
-		}else{
-			$this->log_error('ilegal url:' . $douban_id . ';' . $douban_post_cover_link);
-			return false;
-		}
-	}
-
-	/**
-	 * 下载并上传、存储图片
-	 * @param $douban_id
-	 * @param $douban_pic_url
-	 */
-	private function _down_and_store_film_pic($douban_id, $douban_pic_url){
-		if(empty($douban_id) || empty($douban_pic_url)){
-			return;
-		}
-
-		$this->load->model('Film_pic_model');
-		$douban_pic_url = str_replace('https', 'http', $douban_pic_url);
-		$down_pic_file_name = substr($douban_pic_url, strrpos($douban_pic_url, '/') + 1);
-		$down_pic_file_full_path = '/tmp/' . $down_pic_file_name;
-		$cmd = "wget -q {$douban_pic_url} -O $down_pic_file_full_path";
-		exec($cmd);
-		if(file_exists($down_pic_file_full_path) && filesize($down_pic_file_full_path) > 10) {
-			// 上传
-			if($this->qiniu->upload($down_pic_file_full_path, $down_pic_file_name)){
-				$insert_data = array(
-					'douban_id' => $douban_id,
-					'file_name' => $down_pic_file_name,
-				);
-				$this->Film_pic_model->insert($insert_data);
-			}
-			@unlink($down_pic_file_full_path);
-		}
-	}
-
-	/**
 	 * 爬取豆瓣详情页
 	 * @param $douban_id
 	 * @return array
@@ -391,7 +245,7 @@ class Douban extends MY_Controller {
 		$html = $this->_request_douban($douban_link);
 
 		if(strlen($html) < 300 || strpos($html, '你想访问的页面不存在') !== false) {
-			$this->log_error('豆瓣页面不存在:' . $douban_id);
+			$this->_log_error('豆瓣页面不存在:' . $douban_id);
 			return $ret;
 		}
 
@@ -415,7 +269,7 @@ class Douban extends MY_Controller {
 			}
 
 			if(empty($ret['ch_name'])) {
-				$this->log_error('no ch_name on ' . $douban_id);
+				$this->_log_error('no ch_name on ' . $douban_id);
 			}
 		}
 
@@ -434,7 +288,7 @@ class Douban extends MY_Controller {
 				}
 			}
 			if(empty($ret['post_cover'])) {
-				$this->log_error('no post_cover ' . $douban_id);
+				$this->_log_error('no post_cover ' . $douban_id);
 			}
 		}
 
@@ -448,7 +302,7 @@ class Douban extends MY_Controller {
 			}
 
 			if(empty($ret['year'])) {
-				$this->log_error('no year ' . $douban_id);
+				$this->_log_error('no year ' . $douban_id);
 			}
 		}
 
@@ -618,19 +472,6 @@ class Douban extends MY_Controller {
 		}
 
 		return $ret;
-	}
-
-	private function c_echo($str)  {
-		echo $str . PHP_EOL;
-	}
-
-	private function log_error($msg, $function = 0, $line = 0){
-		if(!empty($function)){
-			$this->c_echo('user error :on function ' . $function . ' line ' . $line . ':' . $msg);
-		}else{
-			$this->c_echo('user error :' . $msg);
-		}
-
 	}
 
 	/**

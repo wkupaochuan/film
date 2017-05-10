@@ -37,20 +37,23 @@ class S80 extends MY_Controller {
 			'info_from' => 2,
 		);
 
+		$film_id = null;
 		if(empty($db_film)){
-			$affect_rows = $this->Film_model->insert($insert_film_data);
+			$film_id = $this->Film_model->insert($insert_film_data);
 		}else{
-			$affect_rows = $this->Film_model->update_by_douban_id($douban_id, $insert_film_data);
+			$film_id = $db_film['id'];
+			$this->Film_model->update_by_douban_id($douban_id, $insert_film_data);
 		}
 
-		if($affect_rows){
+		if($film_id){
 			// process names
 			$insert_names = array();
 			if(!empty($douban_film_detail['other_names'])){
 				$insert_names = $douban_film_detail['other_names'];
 			}
 			$insert_names[] = $douban_film_detail['ch_name'];
-			$this->_process_film_names($douban_id, $insert_names);
+			$this->load->service('Film_service');
+			$this->Film_service->process_film_names($film_id, $insert_names);
 
 			// handle post cover
 			if(!empty($douban_film_detail['post_cover'])){
@@ -116,7 +119,6 @@ class S80 extends MY_Controller {
 			return false;
 		}
 	}
-
 
 	/**
 	 * 爬取页面详情

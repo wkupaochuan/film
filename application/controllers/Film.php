@@ -41,12 +41,12 @@ class Film extends MY_Controller {
 			$film_detail['genre'] = str_replace(',', '/', $film_detail['genre']);
 			$film_detail['other_names'] = !empty($film_detail['other_names'])? json_decode($film_detail['other_names'], true):array();
 			$film_detail['comments'] = !empty($film_detail['comments'])? json_decode($film_detail['comments'], true):array();
-			$film_detail['related_pics'] = $this->Film_pic_model->get_pics_by_douban_id($film_detail['douban_id']);
+			$film_detail['related_pics'] = $this->Film_pic_model->get_by_film_id($film_detail['id']);
 			if(!empty($film_detail['recom_douban_id'])) {
-				$film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['douban_id']);
+				$film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['id']);
 			}
 
-			$bts = $this->Film_bt_model->get_by_douban_id($film_detail['douban_id']);
+			$bts = $this->Film_bt_model->get_by_film_id($film_detail['id']);
 			$sorted_bts = array(
 				'thunder' => array(),
 				'bt' => array(),

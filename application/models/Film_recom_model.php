@@ -39,4 +39,8 @@ SQL;
 		$sql = "UPDATE film_recom SET invalid_times = invalid_times + 1 where recom_douban_id = {$recom_douban_id}";
 		$this->_get_db()->query($sql);
 	}
+	function update_by_douban_id($douban_id, $film_id){
+		$sql = "UPDATE film_recom SET film_id ={$film_id} where douban_id ={$douban_id} ";
+		return $this->_get_db()->query($sql);
+	}
 }

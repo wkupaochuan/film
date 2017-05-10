@@ -15,19 +15,13 @@ class Film_model extends MY_Model {
 	{
 		$search_words = $this->_get_db()->escape_str($search_words);
 		$sql = <<<SQL
-			select * from film WHERE douban_id IN (
-				select DISTINCT(douban_id) from film_names where `name` like '%{$search_words}%'
+			select * from film WHERE id IN (
+				select DISTINCT(film_id) from film_names where `name` like '%{$search_words}%'
 			) AND download_able = 1 limit 0,20;
 SQL;
 
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
-	}
-
-	function insert($film)
-	{
-		$this->_get_db()->insert('film', $film);
-		return $this->_get_db()->affected_rows();
 	}
 
 	function get_by_douban_ids($douban_ids)
@@ -59,13 +53,6 @@ SQL;
 		return empty($result)? array():$result[0];
 	}
 
-	public function update_recom_ids($ids, $douban_id) {
-		$ids = $this->_get_db()->escape($ids);
-		$douban_id = intval($douban_id);
-		$sql = "UPDATE film SET recom_douban_id = {$ids} where douban_id = {$douban_id} ";
-		$this->_get_db()->query($sql);
-	}
-
 	public function get($offset, $limit)
 	{
 		$sql = "select * from film limit {$offset},{$limit}";
@@ -87,17 +74,6 @@ SQL;
 		$this->_get_db()->update($this->_table, $update_info, $where);
 	}
 
-	public function update_douban_post_cover($id, $post_cover){
-		$update_info = array(
-			'douban_post_cover' => $post_cover,
-		);
-		$where = array(
-			'id' => $id
-		);
-
-		$this->_get_db()->update($this->_table, $update_info, $where);
-	}
-
 	public function query_by_name_and_actors($name, $actors)
 	{
 		$search_words = $this->_get_db()->escape_str($name);
@@ -106,22 +82,22 @@ SQL;
 		return $query->result_array();
 	}
 
-	public function query_by_actors_and_douban_id($douban_ids, $actor) {
-		$sql = "select * from film where douban_id in (". implode(',', $douban_ids) . ") and actors like '%" . $this->_get_db()->escape_str($actor) . "%' ";
+	public function query_by_actors_and_id($film_ids, $actor) {
+		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and actors like '%" . $this->_get_db()->escape_str($actor) . "%' ";
 
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}
 
-	public function query_by_director_and_douban_id($douban_ids, $director) {
-		$sql = "select * from film where douban_id in (". implode(',', $douban_ids) . ") and  director like '" . $this->_get_db()->escape_str($director) . "%';";
+	public function query_by_director_and_id($film_ids, $director) {
+		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and  director like '" . $this->_get_db()->escape_str($director) . "%';";
 
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}
 
-	public function query_by_year_and_douban_id($douban_ids, $year) {
-		$sql = "select * from film where douban_id in (". implode(',', $douban_ids) . ") and  `year`=" . intval($year);
+	public function query_by_year_and_id($film_ids, $year) {
+		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and  `year`=" . intval($year);
 
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
@@ -149,11 +125,11 @@ SQL;
 		return $this->_get_db()->affected_rows();
 	}
 
-	public function get_recom_films($douban_id){
-		$douban_id = intval($douban_id);
+	public function get_recom_films($film_id){
+		$film_id = intval($film_id);
 		$sql = <<<SQL
 			select * from film where douban_id IN (
-				select recom_douban_id from film_recom where douban_id = {$douban_id}
+				select recom_douban_id from film_recom where film_id = {$film_id}
 			);
 SQL;
 

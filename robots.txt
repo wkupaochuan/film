@@ -1,2 +1,5 @@
 User-Agent: *
 Allow: /
+
+Sitemap: http://dyzyweb.com/sitemap_g.xml
+Sitemap: http://dyzyweb.com/sitemap_daily.xml

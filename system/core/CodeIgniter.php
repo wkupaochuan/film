@@ -79,6 +79,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  */
 	require_once(BASEPATH.'core/Common.php');
 
+    require(APPPATH.'core/MY_Service.php');
+
 
 /*
  * ------------------------------------------------------

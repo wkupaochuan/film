@@ -6,12 +6,17 @@ class MY_Model extends CI_Model {
 		$this->load->database();
 	}
 
+	/**
+	 * 新增
+	 * @param $data
+	 * @return bool
+	 */
 	public function insert($data){
 		if(empty($this->_table) || empty($data)){
 			return false;
 		}
 		$this->_get_db()->insert($this->_table, $data);
-		return $this->_get_db()->affected_rows();
+		return $this->_get_db()->insert_id();
 	}
 
 	protected function _get_db(){

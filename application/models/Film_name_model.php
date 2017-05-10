@@ -18,4 +18,9 @@ class Film_name_model extends MY_Model {
 		return $query->result_array();
 	}
 
+	function update_by_douban_id($douban_id, $film_id){
+		$sql = "UPDATE film_names SET film_id ={$film_id} where douban_id ={$douban_id} ";
+		return $this->_get_db()->query($sql);
+	}
+
 }

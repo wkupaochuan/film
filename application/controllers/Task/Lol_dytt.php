@@ -13,7 +13,7 @@ class Lol_dytt extends MY_Controller {
 		$wfp = fopen($output_path, 'a+');
 		$i = 0;
 		while(!feof($rfp)) {
-			$this->c_echo($i);
+			$this->_c_echo($i);
 			if($i++ > 100000) {
 				break;
 			}
@@ -29,7 +29,7 @@ class Lol_dytt extends MY_Controller {
 
 			$data = json_decode($line, true);
 			if(empty($data) || !is_array($data)) {
-				$this->log_error('空:' . $line);
+				$this->_log_error('空:' . $line);
 			}
 
 			$url = trim(substr($data['url'], strpos($data['url'], '.com') + 4), '/');
@@ -39,7 +39,7 @@ class Lol_dytt extends MY_Controller {
 
 		fclose($rfp);
 		fclose($wfp);
-		$this->c_echo("end. cost " . (time() - $start_time));
+		$this->_c_echo("end. cost " . (time() - $start_time));
 	}
 
 	public function craw_films_by_recom($output_path){
@@ -54,24 +54,24 @@ class Lol_dytt extends MY_Controller {
 			$un_crawed_urls = $this->Lol_recom_model->get_un_crawed_urls(0, $limit);
 
 			if(empty($un_crawed_urls)){
-				$this->c_echo('end ' . $page);
+				$this->_c_echo('end ' . $page);
 				break;
 			}
 
 			foreach($un_crawed_urls as $tmp){
 				$lol_url = $tmp['lol_url'];
-				$this->c_echo('no exist:' . $lol_url);
+				$this->_c_echo('no exist:' . $lol_url);
 				if($this->_craw_and_store($lol_url, $wfp)){
-					$this->c_echo('success:' . $lol_url);
+					$this->_c_echo('success:' . $lol_url);
 				}else{
 					$this->Lol_recom_model->incr_invalid_times($lol_url);
-					$this->c_echo('fail:' . $lol_url);
+					$this->_c_echo('fail:' . $lol_url);
 				}
 			}
 		}
 
 		fclose($wfp);
-		$this->c_echo("end. cost " . (time() - $start_time));
+		$this->_c_echo("end. cost " . (time() - $start_time));
 	}
 
 	/**
@@ -91,19 +91,19 @@ class Lol_dytt extends MY_Controller {
 		$updated_urls = $this->_craw_updated_urls($day_length);
 		if(!empty($updated_urls)){
 			foreach($updated_urls as $url){
-				$this->c_echo('find updated item :' . $url);
+				$this->_c_echo('find updated item :' . $url);
 				if($this->_craw_and_store($url, $wfp)){
-					$this->c_echo('success' . $url);
+					$this->_c_echo('success' . $url);
 				}else{
-					$this->c_echo('fail' . $url);
+					$this->_c_echo('fail' . $url);
 				}
 			}
 		}else{
-			$this->log_error('craw nothing updated');
+			$this->_log_error('craw nothing updated');
 		}
 
 		fclose($wfp);
-		$this->c_echo("end. cost " . (time() - $start_time));
+		$this->_c_echo("end. cost " . (time() - $start_time));
 	}
 
 	/**
@@ -175,7 +175,7 @@ class Lol_dytt extends MY_Controller {
 		}
 
 		if(empty($film_detail)){
-			$this->log_error('craw nothing from url ' . $url);
+			$this->_log_error('craw nothing from url ' . $url);
 			return false;
 		}else if(!empty($film_detail)){
 			$this->load->model('Lol_recom_model');
@@ -201,12 +201,12 @@ class Lol_dytt extends MY_Controller {
 					$film_detail['query_count'] = $query_res['count'];
 					// output > file
 					fputs($wfp, json_encode($film_detail) . PHP_EOL);
-					$this->log_error('search result fail');
+					$this->_log_error('search result fail');
 					return false;
 				}else{
 					$db_film_detail = $query_res['film_detail'];
 					if(empty($db_film_detail) || empty($db_film_detail['douban_id'])){
-						$this->log_error('bad db film' . json_encode($db_film_detail));
+						$this->_log_error('bad db film' . json_encode($db_film_detail));
 						return false;
 					}
 
@@ -217,7 +217,7 @@ class Lol_dytt extends MY_Controller {
 						$film_detail['multi'] = 1;
 						// output > file
 						fputs($wfp, json_encode($film_detail) . PHP_EOL);
-						$this->log_error('duplicate resources');
+						$this->_log_error('duplicate resources');
 						return false;
 					}else{
 						$this->Film_model->update_by_douban_id($db_film_detail['douban_id'], array(
@@ -226,8 +226,8 @@ class Lol_dytt extends MY_Controller {
 						));
 					}
 
-						// process bts
-					$this->_store_bts($film_detail, $db_film_detail['douban_id']);
+					// process bts
+					$this->_store_bts($film_detail, $db_film_detail['id']);
 				}
 			}
 		}
@@ -260,9 +260,9 @@ class Lol_dytt extends MY_Controller {
 	/**
 	 * 存储bts
 	 * @param $film_detail
-	 * @param $douban_id
+	 * @param $film_id
 	 */
-	private function _store_bts($film_detail, $douban_id){
+	private function _store_bts($film_detail, $film_id){
 		$types = array(
 			'thunder' => 1,
 			'bt' => 2,
@@ -286,7 +286,7 @@ class Lol_dytt extends MY_Controller {
 						if(!in_array($bt['link'], $exist_urls)){
 							array_push($insert_data, array(
 								'batch_id' => $batch_id,
-								'douban_id' => $douban_id,
+								'film_id' => $film_id,
 								'url' => $bt['link'],
 								'name' => $bt['title'],
 							));
@@ -319,7 +319,7 @@ class Lol_dytt extends MY_Controller {
 		$html = $this->_get_film_html($url);
 
 		if(empty($html)) {
-			$this->log_error('get no html from ' . $url);
+			$this->_log_error('get no html from ' . $url);
 			return $ret;
 		}
 
@@ -464,7 +464,7 @@ class Lol_dytt extends MY_Controller {
 			return $this->_get_film_html($encryptUrl, $param, $level + 1);
 		}else{
 			$errorMsg = __FUNCTION__ . ':' . __LINE__ . ':' . 'no matches.' . $html;
-			$this->log_error($errorMsg);
+			$this->_log_error($errorMsg);
 			return '';
 		}
 	}
@@ -627,32 +627,32 @@ class Lol_dytt extends MY_Controller {
 			if(!empty($director) && strpos($director, '/') !== false){
 				$director = mb_substr($director, 0, mb_strpos($director, '/') - 1);
 			}
-			$douban_ids = array_column($query_res, 'douban_id');
+			$film_ids = array_column($query_res, 'id');
 
 			// 根据actor再次定位
 			if(!empty($actors)){
-				$query_res = $this->Film_model->query_by_actors_and_douban_id($douban_ids, $actors[0]);
+				$query_res = $this->Film_model->query_by_actors_and_id($film_ids, $actors[0]);
 				if(empty($query_res) && !empty($actors[1])){
-					$query_res = $this->Film_model->query_by_actors_and_douban_id($douban_ids, $actors[1]);
+					$query_res = $this->Film_model->query_by_actors_and_id($film_ids, $actors[1]);
 				}
 			}
 
 			if(count($query_res) > 1){
-				$actor_locate_douban_ids = array_column($query_res, 'douban_id');
+				$actor_locate_ids = array_column($query_res, 'id');
 
 				// 如果actor仍然不能确定唯一, 继续用director
 				if(!empty($director)){
-					$query_res = $this->Film_model->query_by_director_and_douban_id($actor_locate_douban_ids, $director);
+					$query_res = $this->Film_model->query_by_director_and_id($actor_locate_ids, $director);
 				}
 
 				// 如果actor仍然不能确定唯一, 继续用year
 				if(count($query_res) > 1 && !empty($year)){
-					$query_res = $this->Film_model->query_by_year_and_douban_id(array_column($query_res, 'douban_id'), $year);
+					$query_res = $this->Film_model->query_by_year_and_id(array_column($query_res, 'id'), $year);
 				}
 			}else if(count($query_res) == 0){
 				// 如果actor出现错误, 用director做替代方案
 				if(!empty($director)){
-					$query_res = $this->Film_model->query_by_director_and_douban_id($douban_ids, $director);
+					$query_res = $this->Film_model->query_by_director_and_id($film_ids, $director);
 				}
 			}
 
@@ -691,11 +691,4 @@ class Lol_dytt extends MY_Controller {
 		return $res;
 	}
 
-	private function c_echo($str)  {
-		echo $str . PHP_EOL;
-	}
-
-	private function log_error($msg, $function = 0, $line = 0){
-		$this->c_echo('user error :on function ' . $function . ' line ' . $line . ':' . $msg);
-	}
 }
