@@ -1,10 +1,9 @@
 <?php
 class MY_Model extends CI_Model {
 	protected $_table = '';
-	private $active_conf_group = ENVIRONMENT;
 	public function __construct() {
 		parent::__construct();
-		$this->load->database($this->active_conf_group);
+		$this->load->database();
 	}
 
 	public function insert($data){
@@ -22,7 +21,7 @@ class MY_Model extends CI_Model {
 		}else{
 			if((time() - $last_query_time) > 3){
 				if(!$this->db->reconnect()){
-					$this->load->database($this->active_conf_group);
+					$this->load->database();
 				}
 			}
 		}
