@@ -29,7 +29,7 @@ class MY_Controller extends CI_Controller {
 		$this->_c_echo('user error :on function ' . $function . ' line ' . $line . ':' . $msg);
 	}
 
-	protected function _curl($url, $post_data = array(), $cookie_jar = '', $header = array()){
+	protected function _curl($url, $post_data = array(), $cookie_jar = '', $header = array(), $retry_times = 3){
 		$proxy = array();
 		$proxy_array = array(
 			array(
@@ -66,20 +66,21 @@ class MY_Controller extends CI_Controller {
 			curl_setopt ($ch, CURLOPT_HTTPHEADER, $header);
 		}
 
-		$retry_times = 3;
+		$res = '';
 		while($retry_times > 0){
 			$retry_times--;
 			$res  = curl_exec($ch);
 			$errno     = curl_errno($ch);
 			$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			if($errno == 0 && strlen($res) > 300){
+			if($errno == 0){
 				break;
 			}
 		}
+
+		$errmsg    = (0 != $errno) ? curl_error($ch) : '';
 		curl_close($ch);
 //		echo $http_code . PHP_EOL. 'errno:' . $errno . PHP_EOL . $errmsg . PHP_EOL . $res;exit;
-		if(strlen($res) < 300 || $errno != 0) {
-			$errmsg    = (0 != $errno) ? curl_error($ch) : '';
+		if(strlen($res) < 100 || $errno != 0) {
 			$this->_log_error('curl fail.http code:' . $http_code .';errno:' .  $errno . ';errmsg:' . $errmsg . ';url:' . $url);
 			return '';
 		}else{

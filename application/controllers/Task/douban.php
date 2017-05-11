@@ -1,5 +1,7 @@
 <?php
 class Douban extends MY_Controller {
+	private $douban_login_cookie = '/tmp/douban_login_cookie.txt';
+	private $_login = false;
 
 	public function test(){
 		$page = 0;
@@ -31,18 +33,22 @@ class Douban extends MY_Controller {
 		}
 	}
 
-	public function craw_douban_films_by_db_recom_ids(){
+	public function craw_douban_films_by_db_recom_ids($login){
+		if($login == 1){
+			$this->_login = true;
+		}
 		$page = 0;
 		$limit = 10;
 		$this->load->model('Film_model');
 		$this->load->model('Film_recom_model');
 		$this->load->model('Un_douban_model');
-		while($page++ < 10000000){
+		while($page++ < 100000){
 			$un_crawed_douban_ids = $this->Un_douban_model->get($page * $limit, $limit);
 			if(empty($un_crawed_douban_ids)){
 				echo 'end ' . $page . PHP_EOL;
 				// 重新开始
-				$page = 0;
+//				$page = 0;
+				break;
 			}
 
 			foreach($un_crawed_douban_ids as $tmp){
@@ -59,6 +65,7 @@ class Douban extends MY_Controller {
 
 	public function hand_process_douban($type, $str){
 		$douban_id_arr = array();
+//		$this->_login();
 		if($type == 1){
 			$douban_id_arr = explode(':', $str);
 		}else if($type == 2){
@@ -96,6 +103,15 @@ class Douban extends MY_Controller {
 		}
 	}
 
+	/**
+	 * 登陆并保存登陆后的cookie
+	 * @param string $cp
+	 * @param string $cp_id
+	 */
+	public function login($cp = '', $cp_id = ''){
+		$this->_login($cp, $cp_id);
+	}
+
 	/************************************************* private methods *************************************************************/
 
 	/**
@@ -105,7 +121,7 @@ class Douban extends MY_Controller {
 	 */
 	private function _craw_updated_items($url){
 		$douban_ids = array();
-		$res_str = $this->_request_douban($url);
+		$res_str = $this->_login? $this->_request_douban_login($url):$this->_request_douban($url);
 		if(!empty($res_str)){
 			$items = json_decode($res_str, true);
 			if(!empty($items) && !empty($items['subjects'])){
@@ -253,7 +269,7 @@ class Douban extends MY_Controller {
 		$retry = 3;
 		$html = '';
 		while($retry--){
-			$html = $this->_request_douban($douban_link);
+			$html = $this->_login? $this->_request_douban_login($douban_link):$this->_request_douban($douban_link);
 			if(strlen($html) < 300 || strpos($html, '你想访问的页面不存在') !== false) {
 				continue;
 			}else{
@@ -502,7 +518,7 @@ class Douban extends MY_Controller {
 			sleep(1);
 		}
 
-		$cookie_file_path = './douban_cookie.txt';
+		$cookie_file_path = '/tmp/douban_cookie.txt';
 		static $cookie_time;
 		if(empty($cookie_time) || (time() - $cookie_time) > 8){
 			$cookie_time = time();
@@ -519,5 +535,61 @@ class Douban extends MY_Controller {
 			'Cache-Control:max-age=0',
 		);
 		return $this->_curl($url, null, $cookie_file_path, $header);
+	}
+
+	/**
+	 * 登录
+	 * @param string $cp
+	 * @param string $cp_id
+	 */
+	private function _login($cp = '', $cp_id = ''){
+		$url = 'https://accounts.douban.com/login';
+		$data = array(
+			'form_email' => 'a1qifa@126.com',
+			'form_password' => 'a1qifa+000000',
+			'login' => '登录',
+		);
+
+		if(!empty($cp)){
+			$data = array(
+				'captcha-solution' => $cp,
+				'captcha-id' => $cp_id,
+			);
+		}
+
+		// <img id="captcha_image" src="https://www.douban.com/misc/captcha?id=KyDbTWqR6MGwIIfuCPta1xGx:en&amp;size=s" alt="captcha" class="captcha_image"/>
+		$res = $this->_request_douban_login($url, $data);
+		$pattern = '#<img id="captcha_image" src="([\s\S]*)" alt="captcha" class="captcha_image"/>#U';
+		$matches = array();
+		preg_match($pattern, $res, $matches);
+		if(!empty($matches) && !empty($matches[1])){
+			$this->_c_echo('需要验证码:' . $matches[1]);
+		}else{
+			$this->_c_echo('登录成功');
+		}
+	}
+
+	/**
+	 * 采用登陆后的cookie来请求
+	 * @param $url
+	 * @param array $post_data
+	 * @return mixed|string
+	 */
+	private function _request_douban_login($url, $post_data = array()){
+		static $r_time;
+		$s_intval = rand(3,10);
+		if(!empty($r_time) && (time() - $r_time) > $s_intval ){
+			sleep(1);
+		}
+
+		$header = array(
+			'Accept' => '*/*',
+		    'Accept-Encoding' => 'gzip, deflate',
+		    'Accept-Language' => 'zh-CN,zh;q=0.8',
+		    'Connection' => 'keep-alive',
+		    'Referer' => 'https => //accounts.douban.com/login?alias=*******略',
+		    'User-Agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36',
+		);
+		return $this->_curl($url, $post_data, $this->douban_login_cookie, $header);
 	}
 }
