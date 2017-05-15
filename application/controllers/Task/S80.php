@@ -245,6 +245,6 @@ class S80 extends MY_Controller {
 			file_put_contents($cookie_file_path, '');
 		}
 
-		return $this->_curl($url, array(), $cookie_file_path);
+		return f_curl($url, array(), $cookie_file_path);
 	}
 }

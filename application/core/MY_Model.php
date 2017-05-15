@@ -1,9 +1,10 @@
 <?php
 class MY_Model extends CI_Model {
 	protected $_table = '';
+	private static $last_query_time = 0;
 	public function __construct() {
 		parent::__construct();
-		$this->load->database();
+//		$this->load->database();
 	}
 
 	/**
@@ -20,16 +21,25 @@ class MY_Model extends CI_Model {
 	}
 
 	protected function _get_db(){
-		static $last_query_time;
-		if(empty($last_query_time)){
-			$last_query_time = time();
-		}else{
-			if((time() - $last_query_time) > 3){
-				if(!$this->db->reconnect()){
-					$this->load->database();
-				}
+
+//		f_echo("start db last_q time : " . self::$last_query_time . ";");
+		if(empty(self::$last_query_time)){
+//			f_echo("set last_q time");
+			$this->load->database();
+			self::$last_query_time = time();
+		}
+		$t = time();
+		$diff = $t - self::$last_query_time;
+//		f_echo("db last_q time : " . self::$last_query_time . "; now time {$t}; diff is {$diff}");
+		if(!empty(self::$last_query_time) && (time() - self::$last_query_time) > 3){
+//			f_echo('db need to reconnect');
+			if(!$this->db->reconnect()){
+//				f_echo('db reconnect');
+				$this->load->database();
+				self::$last_query_time = time();
 			}
 		}
+
 		return $this->db;
 	}
 

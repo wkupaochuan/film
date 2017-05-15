@@ -1,6 +1,10 @@
 <?php
 class Lol_dytt extends MY_Controller {
 	public function test($url){
+        $this->load->service('Lol_service');
+//        $this->Lol_service->craw('Dongzuodianying/TSGLXZCL');
+        $this->Lol_service->craw('Zuixinzongyi/KLDBY2012');
+        return;
 		$this->_craw_film_detail("http://www.loldytt.com/Juqingdianying/{$url}/");
 	}
 
@@ -446,7 +450,7 @@ class Lol_dytt extends MY_Controller {
 			file_put_contents($cookie_file_path, '');
 		}
 
-		$html = $param == ''? $this->_curl($encryptUrl, array(), $cookie_file_path):$this->_curl($encryptUrl . '?' . $param, array(), $cookie_file_path);
+		$html = $param == ''? f_curl($encryptUrl, array(), $cookie_file_path):f_curl($encryptUrl . '?' . $param, array(), $cookie_file_path);
 		if(strlen($html) > 500) {
 			$res = iconv(mb_detect_encoding($html,array('UTF-8','GBK','GB2312')), 'UTF-8', $html);
 			return $res;
