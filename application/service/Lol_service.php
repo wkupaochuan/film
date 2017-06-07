@@ -10,15 +10,16 @@ class Lol_service extends MY_Service{
 	 */
 	public function craw($short_url){
         $url = 'http://www.loldytt.com/' . $short_url . '/';
-        $html = $this->_get_film_html($url);
+        $html = $this->_get_film_detail_html($url);
         $film_detail = $this->_extract_film_detail($html);
 
         // 存储
         if(!empty($film_detail) && !(empty($film_detail['thunder']) && empty($film_detail['bt']) && empty($film_detail['magnet']))){
             $film_detail['url'] = $short_url;
-            $this->_up_film_detail($film_detail);
+            return $this->_up_film_detail($film_detail);
         }else{
             f_log_error('craw nothing from ' . $short_url);
+            return false;
         }
 
 	}
@@ -64,6 +65,7 @@ class Lol_service extends MY_Service{
         // 更新资源
         $this->_store_bts($film_detail, $film_id);
 
+        return true;
     }
 
     /**
@@ -82,31 +84,30 @@ class Lol_service extends MY_Service{
 
         $cookie_file_path = '/tmp/lol_cookie.txt';
         static $cookie_time;
-        if(empty($cookie_time) || (time() - $cookie_time) > 3){
+        if(empty($cookie_time) || (time() - $cookie_time) > 10){
             $cookie_time = time();
             file_put_contents($cookie_file_path, '');
         }
 
         $html = $param == ''? f_curl($encryptUrl, array(), $cookie_file_path):f_curl($encryptUrl . '?' . $param, array(), $cookie_file_path);
         $html = iconv(mb_detect_encoding($html,array('UTF-8','GBK','GB2312')), 'UTF-8', $html);
-        if($this->_check_for_lol_detail_html($html)){
-            return $html;
-        }
-
-        $pattern = '#location([\s\S]*)</scri#';
-        $matches = array();
-        preg_match($pattern, $html, $matches);
-        if(!empty($matches) && !empty($matches[1])) {
-            $param = $matches[1];
-            $tmp = explode('?', $param);
-            $param = $tmp[1];
-            $param = str_replace(array('"', '+', ';', ' '), '', $param);
-
-            return $this->_get_film_html($encryptUrl, $param, $level + 1);
-        }else{
-            f_log_error('error on parsing lol html pending :' . $html);
-            return '';
-        }
+        return $html;
+//        echo $html;exit;
+//
+//        $pattern = '#location([\s\S]*)</scri#';
+//        $matches = array();
+//        preg_match($pattern, $html, $matches);
+//        if(!empty($matches) && !empty($matches[1])) {
+//            $param = $matches[1];
+//            $tmp = explode('?', $param);
+//            $param = $tmp[1];
+//            $param = str_replace(array('"', '+', ';', ' '), '', $param);
+//
+//            return $this->_get_film_html($encryptUrl, $param, $level + 1);
+//        }else{
+//            f_log_error('error on parsing lol html pending :' . $html);
+//            return '';
+//        }
     }
 
     /**
@@ -544,4 +545,24 @@ class Lol_service extends MY_Service{
         }
     }
 
+    /**
+     * 获取详情页
+     * @param $url
+     * @return string
+     */
+    private function _get_film_detail_html($url){
+        $retryTimes = 2;
+        while($retryTimes-- > 0){
+            $html = $this->_get_film_html($url);
+            if($this->_check_for_lol_detail_html($html)){
+                return $html;
+            }
+//            else{
+//                f_echo('xxxx on ' . $url);
+//                echo PHP_EOL . $html . PHP_EOL;
+//            }
+        }
+
+        return '';
+    }
 }

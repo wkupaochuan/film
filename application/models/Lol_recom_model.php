@@ -35,7 +35,7 @@ class Lol_recom_model extends MY_Model {
 			select DISTINCT(lol_url) from (
 				select recom_url as lol_url from lol_recom where invalid_times < 5
 			) as a where a.lol_url NOT IN (
-				select lol_url  from film where lol_url IS NOT NULL
+				select url  from lol_film where url IS NOT NULL
 			) limit {$offset}, {$limit};
 SQL;
 

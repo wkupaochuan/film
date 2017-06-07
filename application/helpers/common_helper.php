@@ -50,25 +50,23 @@ function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(),
 	}
 
 	$res = '';
-	while($retry_times > 0){
-		$retry_times--;
+	while($retry_times-- > 0){
 		$res  = curl_exec($ch);
 		$errno     = curl_errno($ch);
 		$http_code = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$errmsg    = (0 != $errno) ? curl_error($ch) : '';
 		if($errno == 0){
 			break;
 		}
 
 		// 7(无法连接到主机), 28(连接超时)
 		if($errno == 7 || $errno == 28){
-			sleep(2);
+			sleep(1);
 		}
 	}
-
-	$errmsg    = (0 != $errno) ? curl_error($ch) : '';
 	curl_close($ch);
-//		echo $http_code . PHP_EOL. 'errno:' . $errno . PHP_EOL . $errmsg . PHP_EOL . $res;exit;
-	if(strlen($res) < 100 || $errno != 0) {
+
+	if(strlen($res) < 50 || $errno != 0) {
 		f_log_error('curl fail.http code:' . $http_code .';errno:' .  $errno . ';errmsg:' . $errmsg . ';url:' . $url);
 		return '';
 	}else{
