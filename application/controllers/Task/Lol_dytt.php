@@ -1,50 +1,12 @@
 <?php
 class Lol_dytt extends MY_Controller {
-	public function test($url){
+	public function test($lol_url){
+		$lol_url = str_replace(':', '/', $lol_url);
         $this->load->service('Lol_service');
-//        $this->Lol_service->craw('Dongzuodianying/TSGLXZCL');
-        $this->Lol_service->craw('Zuixinzongyi/KLDBY2012');
+        $this->Lol_service->craw($lol_url);
         return;
-		$this->_craw_film_detail("http://www.loldytt.com/Juqingdianying/{$url}/");
 	}
 
-	public function re_craw_loldytt($data_path, $output_path)
-	{
-		$start_time = time();
-		$data_path = str_replace(':', '/', $data_path);
-		$output_path = str_replace(':', '/', $output_path);
-		$rfp = fopen($data_path, 'r');
-		$wfp = fopen($output_path, 'a+');
-		$i = 0;
-		while(!feof($rfp)) {
-			$this->_c_echo($i);
-			if($i++ > 100000) {
-				break;
-			}
-
-			$line = trim(fgets($rfp));
-			if(empty($line)) {
-				continue;
-			}
-
-			if($i < 173){
-				continue;
-			}
-
-			$data = json_decode($line, true);
-			if(empty($data) || !is_array($data)) {
-				$this->_log_error('空:' . $line);
-			}
-
-			$url = trim(substr($data['url'], strpos($data['url'], '.com') + 4), '/');
-
-			$this->_craw_and_store($url, $wfp, $data);
-		}
-
-		fclose($rfp);
-		fclose($wfp);
-		$this->_c_echo("end. cost " . (time() - $start_time));
-	}
 
 	public function craw_films_by_recom($output_path){
 		$start_time = time();
@@ -111,21 +73,14 @@ class Lol_dytt extends MY_Controller {
 	}
 
 	/**
-	 * php index.php Task Lol_dytt hand_process 'Anime:JJDJRDEJ' 26268494 ':home:wangchuanchuan:data:lol.lol'
-	 * 手动对应lol_url和豆瓣id
+	 * php index.php Task Lol_dytt hand_process 'Anime:JJDJRDEJ'
+	 * 手动爬取
 	 * @param $lol_url
-	 * @param $douban_id
-	 * @param $output_path
 	 */
-	public function hand_process($lol_url, $douban_id, $output_path){
-		$output_path = str_replace(':', '/', $output_path);
-		$wfp = fopen($output_path, 'a+');
+	public function hand_process($lol_url){
 		$lol_url = str_replace(':', '/', $lol_url);
-		$this->load->model('Film_model');
-
-		$this->Film_model->update_by_douban_id($douban_id, array('lol_url' => $lol_url));
-		$this->_craw_and_store($lol_url, $wfp);
-		fclose($wfp);
+		$this->load->service('Lol_service');
+		$this->Lol_service->craw($lol_url);
 	}
 
 	/************************************************* private methods *************************************************************/

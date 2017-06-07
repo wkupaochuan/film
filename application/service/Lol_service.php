@@ -12,9 +12,59 @@ class Lol_service extends MY_Service{
         $url = 'http://www.loldytt.com/' . $short_url . '/';
         $html = $this->_get_film_html($url);
         $film_detail = $this->_extract_film_detail($html);
+
+        // 存储
+        if(!empty($film_detail) && !(empty($film_detail['thunder']) && empty($film_detail['bt']) && empty($film_detail['magnet']))){
+            $film_detail['url'] = $short_url;
+            $this->_up_film_detail($film_detail);
+        }else{
+            f_log_error('craw nothing from ' . $short_url);
+        }
+
 	}
 
+
     /**************************************private methods****************************************************************************/
+
+    private function _up_film_detail($film_detail){
+        if(empty($film_detail['url'])){
+            return false;
+        }
+        $this->load->model('Lol_film_model');
+
+        $up_film_detail = array(
+            "url" => $film_detail['url'],
+            "ch_cat" => empty($film_detail['ch_cat'])? '':$film_detail['ch_cat'],
+            "ch_name" => empty($film_detail['ch_name'])? '':$film_detail['ch_name'],
+            "lol_up_time" => empty($film_detail['lol_up_time'])? 0:$film_detail['lol_up_time'],
+            "year" => empty($film_detail['year'])? 0:$film_detail['year'],
+            "actors" => empty($film_detail['actors'])? '':implode('/', $film_detail['actors']),
+            "directors" => empty($film_detail['directors'])? '':implode('/',$film_detail['directors']),
+            "writers" => empty($film_detail['writers'])? '':implode('/',$film_detail['writers']),
+            "genres" => empty($film_detail['genres'])? '':implode('/',$film_detail['genres']),
+            "langs" => empty($film_detail['langs'])? '':implode('/',$film_detail['langs']),
+            "countries" => empty($film_detail['countries'])? '':implode('/',$film_detail['countries']),
+            "pub_times" => empty($film_detail['pub_times'])? '':json_encode($film_detail['pub_times']),
+            "other_names" => empty($film_detail['other_names'])? '':implode('/',$film_detail['other_names']),
+        );
+
+        $or_film_detail = $this->Lol_film_model->get_film_detail_by_url($film_detail['url']);
+        $film_id = null;
+
+        if(empty($or_film_detail)){
+            $film_id = $this->Lol_film_model->insert($up_film_detail);
+        }else{
+            $film_id = $or_film_detail['id'];
+            $this->Lol_film_model->update_film_by_id($film_id, $up_film_detail);
+        }
+
+        // 更新推荐
+        $this->_update_recoms($film_detail['url'], $film_detail['recom']);
+
+        // 更新资源
+        $this->_store_bts($film_detail, $film_id);
+
+    }
 
     /**
      * 根据url获取Html(有反爬取机制, 需要根据返回的内容拼接url然后进行多次递归组装, 直到返回争取的html)
@@ -72,7 +122,9 @@ class Lol_service extends MY_Service{
     /**
      * 爬取详情
      * @param $html
-     * @return array
+     * @return array array("ch_cat", "ch_name", "lol_up_time", "actors" => array(), "directors" => array(), "writers" => array(),  "genres" => array(),
+     *                      "langs" => array(), "countries" => array(), "pub_times" => array("timestamp" => array("time", "country")), "year", "other_names" => array(),
+     *                      "recom" => array(), "thunder" => array(array(array("title", "link"))), "bt", "magnet")
      */
     private function _extract_film_detail($html){
         $film_detail = array();
@@ -219,7 +271,6 @@ class Lol_service extends MY_Service{
 
         }
 
-
         // 相关推荐
         $pattern = '#<div class="tu">([\s\S]*)</div>#U';
         $matches = array();
@@ -255,10 +306,9 @@ class Lol_service extends MY_Service{
             preg_match_all($pattern, $part_html, $matches);
             if(!empty($matches) && !empty($matches[1])) {
                 $full_time = $matches[1][count($matches[1]) - 1];
-                $ret['year'] = date('Y', strtotime($full_time));
+                $film_detail['year'] = date('Y', strtotime($full_time));
             }
         }
-
 
         // 相关推荐
         $pattern = '#<div class="tu">([\s\S]*)</div>#U';
@@ -296,7 +346,6 @@ class Lol_service extends MY_Service{
             $film_detail['bt'] = $bts;
         }
 
-        print_r($film_detail);exit;
         return $film_detail;
     }
 
@@ -428,5 +477,71 @@ class Lol_service extends MY_Service{
         return $ret;
     }
 
+    /**
+     * 更新推荐
+     * @param $url
+     * @param $recom_urls
+     */
+    private function _update_recoms($url, $recom_urls){
+        $up_data = array();
+        foreach($recom_urls as $tmp_url){
+            $up_data[] = array(
+                'lol_url' => $url,
+                'recom_url' => $tmp_url
+            );
+        }
+
+        $this->load->model('Lol_recom_model');
+        $this->Lol_recom_model->insert_batch($up_data);
+    }
+
+    /**
+     * 存储bts
+     * @param $film_detail
+     * @param $film_id
+     */
+    private function _store_bts($film_detail, $film_id){
+        $types = array(
+            'thunder' => 1,
+            'bt' => 2,
+            'magnet' => 3
+        );
+
+        $this->load->model('Lol_bt_model');
+        $this->load->model('Lol_bt_batch_model');
+
+        $insert_data = array();
+        foreach($types as $type_key => $type){
+            if(!empty($film_detail[$type_key])){
+                foreach($film_detail[$type_key] as $bt_array){
+                    $exist_bts = $this->Lol_bt_model->get_by_urls(array_column($bt_array, 'link'));
+                    $exist_urls = array();
+
+                    if(empty($exist_bts)){
+                        $batch_id = $this->Lol_bt_batch_model->insert(array('type' => $type));
+                    }else{
+                        $exist_urls = array_column($exist_bts, 'url');
+                        $batch_id = $exist_bts[0]['batch_id'];
+                    }
+
+                    foreach($bt_array as $bt){
+                        if(!in_array($bt['link'], $exist_urls)){
+                            array_push($insert_data, array(
+                                'batch_id' => $batch_id,
+                                'film_id' => $film_id,
+                                'url' => $bt['link'],
+                                'name' => $bt['title'],
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
+        if(!empty($insert_data)){
+            // insert bts
+            $this->Lol_bt_model->insert_batch($insert_data);
+        }
+    }
 
 }

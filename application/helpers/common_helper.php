@@ -58,6 +58,11 @@ function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(),
 		if($errno == 0){
 			break;
 		}
+
+		// 7(无法连接到主机), 28(连接超时)
+		if($errno == 7 || $errno == 28){
+			sleep(2);
+		}
 	}
 
 	$errmsg    = (0 != $errno) ? curl_error($ch) : '';
