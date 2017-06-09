@@ -551,16 +551,12 @@ class Lol_service extends MY_Service{
      * @return string
      */
     private function _get_film_detail_html($url){
-        $retryTimes = 2;
+        $retryTimes = 3;
         while($retryTimes-- > 0){
             $html = $this->_get_film_html($url);
             if($this->_check_for_lol_detail_html($html)){
                 return $html;
             }
-//            else{
-//                f_echo('xxxx on ' . $url);
-//                echo PHP_EOL . $html . PHP_EOL;
-//            }
         }
 
         return '';
