@@ -10,12 +10,12 @@ class Lol_dytt extends MY_Controller {
 	public function craw_films_by_recom(){
 		$start_time = time();
 		$page = 0;
-		$limit = 10;
+		$limit = 50;
 		$total = $fail = $success = 0;
 		$this->load->service('Lol_service');
 		$this->load->model('Lol_recom_model');
 		while($page++ < 1){
-			$un_crawed_urls = $this->Lol_recom_model->get_un_crawed_urls(0 , $limit);
+			$un_crawed_urls = $this->Lol_recom_model->get_un_crawed_urls($fail , $limit);
 			$total += count($un_crawed_urls);
 
 			if(empty($un_crawed_urls)){
