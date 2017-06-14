@@ -23,4 +23,28 @@ class Film_name_model extends MY_Model {
 		return $this->_get_db()->query($sql);
 	}
 
+	function search_by_names($names) {
+		$sql = "select * from film_names ";
+
+		$like_arr = array();
+//		foreach($names as $name){
+//			$like_arr[] = " `name` like '%" . $this->_get_db()->escape_str($name) ."%'";
+//		}
+
+		foreach($names as $name){
+			$like_arr[] = " `name` = '" . $this->_get_db()->escape_str($name) ."'";
+		}
+
+		$like = " where " . implode(' or ', $like_arr);
+		$sql .= $like;
+//		echo $sql;exit;
+		$query = $this->_get_db()->query($sql);
+		return $query->result_array();
+	}
+
+	public function f1($offset, $limit){
+		$sql = "select * from film_names_copy limit {$offset},{$limit}";
+		return $this->_c_query($sql);
+	}
+
 }

@@ -21,4 +21,9 @@ class Lol_film_model extends MY_Model {
 		);
 		$this->_get_db()->update($this->_table, $data, $where);
 	}
+
+	public function get_film_by_range($offset, $limit){
+		$sql = "select * from {$this->_table} limit {$offset},{$limit}";
+		return $this->_c_query($sql);
+	}
 }

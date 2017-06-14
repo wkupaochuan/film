@@ -3,6 +3,13 @@ class Film_service extends MY_Service{
 
     /**************************************public methods****************************************************************************/
 
+	public function __construct(){
+		parent::__construct();
+		$this->load->model('Film_model');
+		$this->load->model('Film_pic_model');
+		$this->load->service('Lol_service');
+	}
+
 	/**
 	 * 处理名称
 	 * @param $douban_id
@@ -38,6 +45,66 @@ class Film_service extends MY_Service{
 		return $films;
 	}
 
+	/**
+	 * 根据id更新
+	 * @param $film_id
+	 * @param $data
+	 * @return bool
+	 */
+	public function update_film_by_id($film_id, $data){
+		if(empty($film_id)){
+			return false;
+		}
+
+		return $this->Film_model->update_by_id($film_id, $data);
+	}
+
+	/**
+	 * 获取电影详情
+	 * @param $film_id
+	 * @return array
+	 */
+	public function get_film_detail($film_id){
+		$film_detail = array();
+		if(empty($film_id)){
+			return  $film_detail;
+		}
+
+		$film_detail = $this->Film_model->get_detail_by_id($film_id);
+		if(empty($film_detail)){
+			return $film_detail;
+		}
+
+		$film_detail['actors'] = str_replace(',', '/', $film_detail['actors']);
+		$film_detail['genre'] = str_replace(',', '/', $film_detail['genre']);
+		$film_detail['other_names'] = !empty($film_detail['other_names'])? json_decode($film_detail['other_names'], true):array();
+		$film_detail['comments'] = !empty($film_detail['comments'])? json_decode($film_detail['comments'], true):array();
+		$film_detail['related_pics'] = $this->Film_pic_model->get_by_film_id($film_detail['id']);
+		!empty($film_detail['recom_douban_id']) && $film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['id']);
+
+		if(!empty($film_detail['lol_id'])){
+			$bts = $this->Lol_service->get_bts($film_detail['lol_id']);
+			$sorted_bts = array(
+				'thunder' => array(),
+				'bt' => array(),
+				'mag' => array(),
+			);
+			if(!empty($bts)){
+				foreach($bts as $tmp){
+					if($tmp['type'] == 1){
+						$sorted_bts['thunder'][$tmp['batch_id']][] = $tmp;
+					}else if($tmp['type'] == 2){
+						$sorted_bts['bt'][$tmp['batch_id']][] = $tmp;
+					}else if($tmp['type'] == 3){
+						$sorted_bts['mag'][$tmp['batch_id']][] = $tmp;
+					}
+				}
+			}
+			$film_detail['bt'] = $sorted_bts;
+		}
+
+		return $film_detail;
+	}
 
     /**************************************private methods****************************************************************************/
 

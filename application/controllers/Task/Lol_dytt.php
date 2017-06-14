@@ -2,8 +2,8 @@
 class Lol_dytt extends MY_Controller {
 	public function test($lol_url){
 		$lol_url = str_replace(':', '/', $lol_url);
-        $this->load->service('Lol_service');
-        $this->Lol_service->craw($lol_url);
+        $this->load->service('Lol_craw_service');
+        $this->Lol_craw_service->craw($lol_url);
         return;
 	}
 
@@ -12,7 +12,7 @@ class Lol_dytt extends MY_Controller {
 		$page = 0;
 		$limit = 50;
 		$total = $fail = $success = 0;
-		$this->load->service('Lol_service');
+		$this->load->service('Lol_craw_service');
 		$this->load->model('Lol_recom_model');
 		while($page++ < 1){
 			$un_crawed_urls = $this->Lol_recom_model->get_un_crawed_urls($fail , $limit);
@@ -26,7 +26,7 @@ class Lol_dytt extends MY_Controller {
 			foreach($un_crawed_urls as $tmp){
 				$lol_url = $tmp['lol_url'];
 				f_echo('no exist:' . $lol_url);
-				if($this->Lol_service->craw($lol_url)){
+				if($this->Lol_craw_service->craw($lol_url)){
 					$success++;
 					f_echo('success:' . $lol_url);
 				}else{
@@ -49,7 +49,7 @@ class Lol_dytt extends MY_Controller {
 			return;
 		}
 
-		$this->load->service('Lol_service');
+		$this->load->service('Lol_craw_service');
 
 		$start_time = time();
 
@@ -57,7 +57,7 @@ class Lol_dytt extends MY_Controller {
 		if(!empty($updated_urls)){
 			foreach($updated_urls as $url){
 				$this->_c_echo('find updated item :' . $url);
-				if($this->Lol_service->craw($url)){
+				if($this->Lol_craw_service->craw($url)){
 					$this->_c_echo('success' . $url);
 				}else{
 					$this->_c_echo('fail' . $url);
@@ -77,8 +77,8 @@ class Lol_dytt extends MY_Controller {
 	 */
 	public function hand_process($lol_url){
 		$lol_url = str_replace(':', '/', $lol_url);
-		$this->load->service('Lol_service');
-		$this->Lol_service->craw($lol_url);
+		$this->load->service('Lol_craw_service');
+		$this->Lol_craw_service->craw($lol_url);
 	}
 
 	/************************************************* private methods *************************************************************/

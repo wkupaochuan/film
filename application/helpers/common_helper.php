@@ -74,3 +74,33 @@ function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(),
 	}
 }
 
+function w_str_split($str){
+	$ret = array();
+	$encoding = mb_detect_encoding($str);
+	for($i = 0; $i < mb_strlen($str, $encoding); $i++){
+		$ret[] = mb_substr($str, $i, 1, $encoding);
+	}
+
+	return $ret;
+}
+
+function explode_by_num($str){
+	$ret = array();
+	$arr_str = w_str_split($str);
+	$counter = 0;
+	$ret[$counter] = $arr_str[0];
+	$numeric = is_numeric($arr_str[0]);
+	for($i = 1; $i < count($arr_str); $i++){
+		$char = $arr_str[$i];
+		if(is_numeric($char) === $numeric){
+			$ret[$counter] .= $char;
+		}else{
+			$counter++;
+			$ret[$counter] = $char;
+			$numeric = is_numeric($char);
+		}
+	}
+
+	return $ret;
+}
+

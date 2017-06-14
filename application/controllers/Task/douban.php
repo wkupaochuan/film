@@ -377,7 +377,14 @@ class Douban extends MY_Controller {
 			preg_match($pattern, $html, $matches);
 			if(!empty($matches[1])) {
 				$names = explode('/', $matches[1]);
-				$ret['other_names'] = $names;
+				if(!empty($names)){
+					foreach($names as $tmp_name){
+						if(!empty(trim($tmp_name))){
+							$ret['other_names'][] = trim($tmp_name);
+						}
+					}
+				}
+
 			}
 		}
 
@@ -387,7 +394,7 @@ class Douban extends MY_Controller {
 			$matches = array();
 			preg_match($pattern, $html, $matches);
 			if(!empty($matches[1])) {
-				$ret['director'] = $matches[1];
+				$ret['director'] = trim($matches[1]);
 			}
 		}
 
@@ -403,7 +410,14 @@ class Douban extends MY_Controller {
 				$matches = array();
 				preg_match_all($pattern, $actors_html, $matches);
 				if(!empty($matches[1])) {
-					$ret['actors'] = $matches[1];
+					$actors = $matches[1];
+					if(!empty($actors)){
+						foreach($actors as $tmp_actor){
+							if(!empty(trim($tmp_actor))){
+								$ret['actors'][] = trim($tmp_actor);
+							}
+						}
+					}
 				}
 			}
 		}

@@ -1,7 +1,9 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-
 class Film extends MY_Controller {
+	public function __construct(){
+		parent::__construct();
+		$this->load->service('Film_service');
+	}
 
 	public function index()
 	{
@@ -38,40 +40,8 @@ class Film extends MY_Controller {
 	public function detail()
 	{
 		$id = $this->input->get('id');
-		$this->load->model('Film_model');
-		$this->load->model('Film_pic_model');
-		$this->load->model('Film_bt_model');
-		$film_detail = $this->Film_model->get_detail_by_id($id);
 
-		if(!empty($film_detail)) {
-			$film_detail['actors'] = str_replace(',', '/', $film_detail['actors']);
-			$film_detail['genre'] = str_replace(',', '/', $film_detail['genre']);
-			$film_detail['other_names'] = !empty($film_detail['other_names'])? json_decode($film_detail['other_names'], true):array();
-			$film_detail['comments'] = !empty($film_detail['comments'])? json_decode($film_detail['comments'], true):array();
-			$film_detail['related_pics'] = $this->Film_pic_model->get_by_film_id($film_detail['id']);
-			if(!empty($film_detail['recom_douban_id'])) {
-				$film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['id']);
-			}
-
-			$bts = $this->Film_bt_model->get_by_film_id($film_detail['id']);
-			$sorted_bts = array(
-				'thunder' => array(),
-				'bt' => array(),
-				'mag' => array(),
-			);
-			if(!empty($bts)){
-				foreach($bts as $tmp){
-					if($tmp['type'] == 1){
-						$sorted_bts['thunder'][$tmp['batch_id']][] = $tmp;
-					}else if($tmp['type'] == 2){
-						$sorted_bts['bt'][$tmp['batch_id']][] = $tmp;
-					}else if($tmp['type'] == 3){
-						$sorted_bts['mag'][$tmp['batch_id']][] = $tmp;
-					}
-				}
-			}
-			$film_detail['bt'] = $sorted_bts;
-		}
+		$film_detail = $this->Film_service->get_film_detail($id);
 
 		$this->assign('data', array(
 			'title' => "<" . $film_detail['ch_name'] . ">电影迅雷下载 - BT种子下载 - 磁力链接下载",

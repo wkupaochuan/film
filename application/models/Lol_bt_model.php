@@ -17,7 +17,7 @@ class Lol_bt_model extends MY_Model {
 	}
 
 	function get_by_film_id($film_id){
-		$sql = "select bt.id, bt.batch_id, bt.`name`, bt.url, batch.type from lol_bts bt left join lol_bts_batch batch on bt.batch_id = batch.id where bt.film_id = " . intval($film_id);
+		$sql = "select bt.id, bt.batch_id, bt.`name`, bt.url, batch.type from {$this->_table} bt left join lol_bts_batch batch on bt.batch_id = batch.id where bt.film_id = " . intval($film_id);
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}
@@ -44,4 +44,5 @@ class Lol_bt_model extends MY_Model {
 		$sql = "select DISTINCT(film_id) from film_bts where ctime >= FROM_UNIXTIME({$timestamp})";
 		return $this->_c_query($sql);
 	}
+
 }
