@@ -1,10 +1,23 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-$config['theme']        = 'default';
-$config['template_dir'] = APPPATH . 'views';
-$config['compile_dir']  = FCPATH . 'templates_c';
-$config['cache_dir']    = FCPATH . 'cache';
-$config['config_dir']   = FCPATH . 'configs';
-$config['template_ext'] = '.tpl';
-$config['caching']      = false;
-$config['lefttime']     = 60;
+$config = array(
+	'smarty_pc' => array(
+		'theme' => 'default',
+		'template_dir' => APPPATH . 'views',
+		'compile_dir' => FCPATH . 'templates_c',
+		'cache_dir' =>  FCPATH . 'cache',
+		'template_ext' => '.tpl',
+		'config_dir' => FCPATH . 'configs',
+		'caching' => false,
+		'lefttime' => 60,
+	),
+	'smarty_h5' => array(
+		'theme' => 'default',
+		'template_dir' => APPPATH . 'viewsh5',
+		'compile_dir' => FCPATH . 'templates_m',
+		'cache_dir' =>  FCPATH . 'cache',
+		'template_ext' => '.tpl',
+		'config_dir' => FCPATH . 'configs',
+		'caching' => false,
+		'lefttime' => 60,
+	),
+);

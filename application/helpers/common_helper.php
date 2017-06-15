@@ -104,3 +104,12 @@ function explode_by_num($str){
 	return $ret;
 }
 
+/**
+ * 判定请求是否来自移动端
+ * @return bool
+ */
+function is_mobile()
+{
+	$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
+	return strpos($agent, 'iphone') ||  strpos($agent, 'android') || strpos($agent, 'ipad');
+}

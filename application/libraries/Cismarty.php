@@ -7,13 +7,19 @@ class Cismarty extends Smarty {
 	public function  __construct(){
 		$this->ci = & get_instance();
 		$this->ci->load->config('smarty');//加载smarty的配置文件
-		//获取相关的配置项
-		$this->template_dir = $this->ci->config->item('template_dir');
-		$this->compile_dir = $this->ci->config->item('compile_dir');
-		$this->cache_dir = $this->ci->config->item('cache_dir');
-		$this->config_dir = $this->ci->config->item('config_dir');
-//		$this->ext = $this->ci->config->item('template_ext');
-//		$this->caching = $this->ci->config->item('caching');
 
+		if(is_mobile()){
+			$all_configs = $this->ci->config->item('smarty_h5');
+		}else{
+			$all_configs = $this->ci->config->item('smarty_pc');
+		}
+
+		//获取相关的配置项
+		$this->template_dir = $all_configs['template_dir'];
+		$this->compile_dir = $all_configs['compile_dir'];
+		$this->cache_dir = $all_configs['cache_dir'];
+		$this->config_dir = $all_configs['config_dir'];
+//		$this->ext = $all_configs('template_ext');
+//		$this->caching = $all_configs('caching');
 	}
 }

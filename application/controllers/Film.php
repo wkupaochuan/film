@@ -8,8 +8,7 @@ class Film extends MY_Controller {
 	public function index()
 	{
 		$search_words = $this->input->get('film_name');
-		$search_result = array();
-		$tpl = '';
+
 		if(!empty($search_words)) {
 			$tpl = 'search_home.tpl';
 			$this->load->model('Film_model');
