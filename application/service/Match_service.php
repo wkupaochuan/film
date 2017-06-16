@@ -10,14 +10,18 @@ class Match_service extends MY_Service{
 		$this->load->model('Film_model');
 	}
 
-	public function walk_lol_db($only_empty = false){
+	public function walk_lol_db($only_un_matched = false){
 		$page = 0;
 		$limit = 10;
 
 		$echo_msg = array();
 		while($page < 10000){
 			echo $page . PHP_EOL;
-			$films = $this->Lol_film_model->get_film_by_range($page++ * $limit, $limit);
+			if($only_un_matched){
+				$films = $this->Lol_film_model->get_un_matched_films($page++ * $limit, $limit);
+			}else{
+				$films = $this->Lol_film_model->get_film_by_range($page++ * $limit, $limit);
+			}
 			if(empty($films)){
 				break;
 			}
@@ -32,7 +36,13 @@ class Match_service extends MY_Service{
 				$match_res = $this->_query_film_by_lol_detail($film);
 				$echo_msg[$match_res['match']] = isset($echo_msg[$match_res['match']])? $echo_msg[$match_res['match']]+1:1;
 				if($match_res['match'] == 1){
-					$this->_up_lol_match($match_res['film_id'], $film['id']);
+					// 禁止覆盖
+					$douban_db_film = $this->Film_model->get_detail_by_id($match_res['film_id']);
+					if(!empty($douban_db_film['lol_id']) && $film['id'] != $douban_db_film['lol_id']){
+						f_log_error('lol and film matche duplicated lol_id:' . $douban_db_film['lol_id'] . ', film_id: ' . $douban_db_film['id']);
+					}else{
+						$this->_up_lol_match($match_res['film_id'], $film['id']);
+					}
 				}
 			}
 		}

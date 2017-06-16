@@ -26,4 +26,9 @@ class Lol_film_model extends MY_Model {
 		$sql = "select * from {$this->_table} limit {$offset},{$limit}";
 		return $this->_c_query($sql);
 	}
+
+	public function get_un_matched_films($offset, $limit){
+		$sql = "select * from {$this->_table} where film_id = 0 limit {$offset},{$limit}";
+		return $this->_c_query($sql);
+	}
 }
