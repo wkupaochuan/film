@@ -110,6 +110,9 @@ function explode_by_num($str){
  */
 function is_mobile()
 {
+	if(!isset($_SERVER['HTTP_USER_AGENT'])){
+		return false;
+	}
 	$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
 	return strpos($agent, 'iphone') ||  strpos($agent, 'android') || strpos($agent, 'ipad');
 }

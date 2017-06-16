@@ -6,11 +6,6 @@ class Film_bt_model extends MY_Model {
 		parent::__construct();
 	}
 
-	function insert($bt)
-	{
-		$this->_get_db()->insert($this->_table, $bt);
-	}
-
 	function insert_batch($bt)
 	{
 		$this->_get_db()->insert_batch($this->_table, $bt);

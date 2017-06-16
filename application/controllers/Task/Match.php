@@ -7,11 +7,47 @@ class Match extends  MY_Controller{
 
 	}
 
+	public function manual($douban_id, $lol_url){
+
+	}
+
 	public function lol(){
 		$this->Match_service->walk_lol_db();
 	}
 
+	public function manual_lol($douban_id, $url){
+		$url = str_replace(':', '/', $url);
+		$this->Match_service->lol_manual($douban_id, $url);
+	}
 
+	public function me($path){
+		$path = str_replace(':', '/', $path);
+		$fp = fopen($path, 'r');
+		while($line = fgets($fp)){
+			$line = trim($line);
+			if(empty($line)){
+				break;
+			}
+
+			$params = explode('/', $line);
+			if(count($params) != 4){
+				f_log_error('error' . $line);
+			}
+			$bt = $params[0];
+			$type = $params[1];
+			$film_id = $params[2];
+			$name = $params[3];
+
+			echo $bt . PHP_EOL;
+			echo $type . PHP_EOL;
+			echo $film_id . PHP_EOL;
+			echo $name . PHP_EOL;
+//			exit;
+			$this->Match_service->me($bt, $type, $film_id, $name);
+		}
+		fclose($fp);
+
+	}
 
 	public function trim_film_names(){
 		$page = 0;

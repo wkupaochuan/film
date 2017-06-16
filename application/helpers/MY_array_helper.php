@@ -2,7 +2,7 @@
 
 function f_array_append($desc, $append){
 	if(empty($append)){
-		return;
+		return $desc;
 	}
 
 	foreach($append as $tmp){

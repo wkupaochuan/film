@@ -552,7 +552,6 @@ class Douban extends MY_Controller {
 		return $ret;
 	}
 
-
 	/**
 	 * 采用登陆后的cookie来请求
 	 * @param $url

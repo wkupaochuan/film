@@ -12,7 +12,7 @@ class Film_service extends MY_Service{
 
 	/**
 	 * 处理名称
-	 * @param $douban_id
+	 * @param $film_id
 	 * @param $names
 	 */
 	public function process_film_names($film_id, $names){
@@ -82,26 +82,32 @@ class Film_service extends MY_Service{
 		$film_detail['related_pics'] = $this->Film_pic_model->get_by_film_id($film_detail['id']);
 		!empty($film_detail['recom_douban_id']) && $film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['id']);
 
+		$all_bts = array();
+
 		if(!empty($film_detail['lol_id'])){
-			$bts = $this->Lol_service->get_bts($film_detail['lol_id']);
-			$sorted_bts = array(
-				'thunder' => array(),
-				'bt' => array(),
-				'mag' => array(),
-			);
-			if(!empty($bts)){
-				foreach($bts as $tmp){
-					if($tmp['type'] == 1){
-						$sorted_bts['thunder'][$tmp['batch_id']][] = $tmp;
-					}else if($tmp['type'] == 2){
-						$sorted_bts['bt'][$tmp['batch_id']][] = $tmp;
-					}else if($tmp['type'] == 3){
-						$sorted_bts['mag'][$tmp['batch_id']][] = $tmp;
-					}
+			$all_bts = f_array_append($all_bts, $this->Lol_service->get_bts($film_detail['lol_id']));
+		}
+		// todo batch_id 重复
+		$this->load->model('Film_bt_model');
+		$all_bts = f_array_append($all_bts, $this->Film_bt_model->get_by_film_id($film_id));
+
+		$sorted_bts = array(
+			'thunder' => array(),
+			'bt' => array(),
+			'mag' => array(),
+		);
+		if(!empty($all_bts)){
+			foreach($all_bts as $tmp){
+				if($tmp['type'] == 1){
+					$sorted_bts['thunder'][$tmp['batch_id']][] = $tmp;
+				}else if($tmp['type'] == 2){
+					$sorted_bts['bt'][$tmp['batch_id']][] = $tmp;
+				}else if($tmp['type'] == 3){
+					$sorted_bts['mag'][$tmp['batch_id']][] = $tmp;
 				}
 			}
-			$film_detail['bt'] = $sorted_bts;
 		}
+		$film_detail['bt'] = $sorted_bts;
 
 		return $film_detail;
 	}

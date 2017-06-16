@@ -9,6 +9,7 @@ class Lol_craw_service extends MY_Service{
 	 * @return bool
 	 */
 	public function craw($short_url){
+        $short_url = trim(trim($short_url), '/');
         $url = 'http://www.loldytt.com/' . $short_url . '/';
         $html = $this->_get_film_detail_html($url);
         $film_detail = $this->_extract_film_detail($html);
@@ -21,7 +22,6 @@ class Lol_craw_service extends MY_Service{
             f_log_error('craw nothing from ' . $short_url);
             return false;
         }
-
 	}
 
     /**************************************private methods****************************************************************************/
