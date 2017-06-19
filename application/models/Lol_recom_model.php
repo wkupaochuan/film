@@ -33,7 +33,7 @@ class Lol_recom_model extends MY_Model {
 	function get_un_crawed_urls($offset, $limit){
 		$sql = <<<SQL
 			select DISTINCT(lol_url) from (
-				select recom_url as lol_url from lol_recom where invalid_times < 5
+				select recom_url as lol_url from lol_recom where invalid_times < 1
 			) as a where a.lol_url NOT IN (
 				select url  from lol_film where url IS NOT NULL
 			) limit {$offset}, {$limit};

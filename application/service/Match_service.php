@@ -1,49 +1,45 @@
 <?php
 
 class Match_service extends MY_Service{
+	// 匹配结果
+	const MATCH_NOTHING_BY_NAME = 0;
+	const MATCH_SUCCESS = 1;
+	const MATCH_NOTHING_BY_ACTOR = 2;
+	const MATCH_MULTI = 3;
+	const MATCH_COMFLICT = 4;
+
 	public function __construct(){
 		parent::__construct();
 		$this->load->model('Film_name_model');
 		$this->load->model('Film_model');
 		$this->load->model('Lol_film_model');
 		$this->load->service('Lol_craw_service');
+		$this->load->service('Lol_service');
 		$this->load->model('Film_model');
 	}
 
-	public function walk_lol_db($only_un_matched = false){
-		$page = 0;
-		$limit = 10;
+	/**
+	 * 遍历所有lol内容
+	 * @param int $un_match_times_limit
+	 * @param int $start
+	 */
+	public function walk_lol_db($un_match_times_limit = 0, $start = 0){
+		$limit = 20;
+		$page = $start/$limit;
 
 		$echo_msg = array();
 		while($page < 10000){
-			echo $page . PHP_EOL;
-			if($only_un_matched){
-				$films = $this->Lol_film_model->get_un_matched_films($page++ * $limit, $limit);
-			}else{
-				$films = $this->Lol_film_model->get_film_by_range($page++ * $limit, $limit);
-			}
+			f_echo ($page);
+			$films = $this->Lol_film_model->get_un_matched_films($page++ * $limit, $limit, $un_match_times_limit);
+
 			if(empty($films)){
 				break;
 			}
 
 			foreach($films as $film){
-				$film['other_names'] = explode('/', $film['other_names'] );
-
-				$film['actors'] = explode('/', $film['actors'] );
-				foreach($film['actors'] as &$actor){
-					$actor = trim($actor);
-				}
-				$match_res = $this->_query_film_by_lol_detail($film);
-				$echo_msg[$match_res['match']] = isset($echo_msg[$match_res['match']])? $echo_msg[$match_res['match']]+1:1;
-				if($match_res['match'] == 1){
-					// 禁止覆盖
-					$douban_db_film = $this->Film_model->get_detail_by_id($match_res['film_id']);
-					if(!empty($douban_db_film['lol_id']) && $film['id'] != $douban_db_film['lol_id']){
-						f_log_error('lol and film matche duplicated lol_id:' . $douban_db_film['lol_id'] . ', film_id: ' . $douban_db_film['id']);
-					}else{
-						$this->_up_lol_match($match_res['film_id'], $film['id']);
-					}
-				}
+				$match_res = $this->_match_by_lol_detail($film);
+				f_echo($film['id'] . '-' . $film['url'] . '-' . $film['ch_name'] . '-' . $match_res);
+				$echo_msg[$match_res] = isset($echo_msg[$match_res])? $echo_msg[$match_res]+1:1;
 			}
 		}
 
@@ -85,7 +81,7 @@ class Match_service extends MY_Service{
 			}
 		}
 
-		return $this->_up_lol_match($douban_db_detail['id'], $lol_db_detail['id']);
+		return $this->_up_lol_db_match_relation($douban_db_detail['id'], $lol_db_detail['id']);
 	}
 
 	/**
@@ -175,6 +171,12 @@ class Match_service extends MY_Service{
 			return $name;
 		}
 
+		// (国产) =>
+		if(strpos($name, '(国产)') !== false){
+			$name = str_replace('(国产)', '', $name);
+			return $name;
+		}
+
 		return $name;
 	}
 
@@ -184,7 +186,7 @@ class Match_service extends MY_Service{
 	 * @return array
 	 */
 	private function _query_film_by_lol_detail($lol_film_detail){
-		$match_result = 0; // 0--no match, 1--match, 2--actor no match, 3--multi
+		$match_result = self::MATCH_NOTHING_BY_NAME;
 		$match_film_id = 0;
 
 		if(empty(trim($lol_film_detail['ch_name']))){
@@ -204,16 +206,16 @@ class Match_service extends MY_Service{
 		$search_res = array_unique(array_column($search_res, 'film_id'));
 
 		if(count($search_res) == 1){
-			$match_result = 1;
+			$match_result = self::MATCH_SUCCESS;
 			$match_film_id = $search_res[0];
 		}else if (count($search_res) > 1){
-			$match_result = 3;
+			$match_result = self::MATCH_MULTI;
 			if(!empty($lol_film_detail['actors'][0])){
 				$actor_search_res = $this->Film_model->query_by_actors_and_id($search_res, $lol_film_detail['actors'][0]);
 				if(count($actor_search_res) == 0){
-					$match_result = 2;
+					$match_result = self::MATCH_NOTHING_BY_ACTOR;
 				}else if(count($actor_search_res) == 1){
-					$match_result = 1;
+					$match_result = self::MATCH_SUCCESS;
 					$match_film_id = $actor_search_res[0]['id'];
 				}
 			}
@@ -231,14 +233,47 @@ class Match_service extends MY_Service{
 	 * @param $lol_id
 	 * @return bool
 	 */
-	private function _up_lol_match($film_id, $lol_id){
+	private function _up_lol_db_match_relation($film_id, $lol_id){
 		if(empty($film_id) || empty($lol_id)){
 			return false;
 		}
-		if($this->Film_model->update_by_id($film_id, array('lol_id' => $lol_id))){
+		if($this->Film_model->update_by_id($film_id, array('lol_id' => $lol_id, 'download_able' => 1))){
 			return $this->Lol_film_model->update_film_by_id($lol_id, array('film_id' => $film_id));
 		}
 
 		return false;
+	}
+
+	/**
+	 * 根据lol内容匹配
+	 * @param $lol_film_detail
+	 * @return int
+	 */
+	private function _match_by_lol_detail($lol_film_detail){
+		$this->Lol_service->format_db_film_detail($lol_film_detail);
+
+		$match_res = $this->_query_film_by_lol_detail($lol_film_detail);
+
+		$res = $match_res['match'];
+		if($res == 1){
+			// 禁止覆盖
+			$douban_film_detail = $this->Film_model->get_detail_by_id($match_res['film_id']);
+
+			if(!empty($douban_film_detail['lol_id']) && $lol_film_detail['id'] != $douban_film_detail['lol_id']){
+				f_log_error('lol and film matche duplicated lol_id:' . $douban_film_detail['lol_id'] . ', film_id: ' . $douban_film_detail['id']);
+				$res = self::MATCH_COMFLICT;
+			}else{
+				$this->_up_lol_db_match_relation($match_res['film_id'], $lol_film_detail['id']);
+			}
+		}
+
+		if($res != 1){
+//			print_r($lol_film_detail);
+//			f_echo($res);
+//			exit;
+			$this->Lol_film_model->incr_un_match_times($lol_film_detail['id']);
+		}
+
+		return $res;
 	}
 }

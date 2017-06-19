@@ -70,12 +70,13 @@ class Douban extends MY_Controller {
 			$this->_login = true;
 		}
 		$page = 0;
-		$limit = 10;
+		$limit = 20;
+		$fail = 0;
 		$this->load->model('Film_model');
 		$this->load->model('Film_recom_model');
 		$this->load->model('Un_douban_model');
 		while($page++ < 100000){
-			$un_crawed_douban_ids = $this->Un_douban_model->get($page * $limit, $limit);
+			$un_crawed_douban_ids = $this->Un_douban_model->get($fail, $limit);
 			if(empty($un_crawed_douban_ids)){
 				echo 'end ' . $page . PHP_EOL;
 				// 重新开始
@@ -90,6 +91,7 @@ class Douban extends MY_Controller {
 					echo 'success:' . $douban_id . PHP_EOL;
 				}else{
 					echo 'fail:' . $douban_id . PHP_EOL;
+					$fail++;
 				}
 			}
 		}

@@ -12,13 +12,16 @@ class Lol_dytt extends MY_Controller {
         return;
 	}
 
+	/**
+	 * 根据推荐爬取
+	 */
 	public function craw_films_by_recom(){
 		$start_time = time();
 		$page = 0;
 		$limit = 50;
 		$total = $fail = $success = 0;
 		$this->load->model('Lol_recom_model');
-		while($page++ < 1){
+		while($page++ < 100){
 			$un_crawed_urls = $this->Lol_recom_model->get_un_crawed_urls($fail , $limit);
 			$total += count($un_crawed_urls);
 

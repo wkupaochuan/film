@@ -27,8 +27,14 @@ class Lol_film_model extends MY_Model {
 		return $this->_c_query($sql);
 	}
 
-	public function get_un_matched_films($offset, $limit){
-		$sql = "select * from {$this->_table} where film_id = 0 limit {$offset},{$limit}";
+	public function get_un_matched_films($offset, $limit, $un_match_times_limit = 0){
+		$sql = "select * from {$this->_table} where film_id = 0 and un_match_times <= {$un_match_times_limit} limit {$offset},{$limit}";
 		return $this->_c_query($sql);
+	}
+
+	public function incr_un_match_times($lol_film_id){
+		$lol_film_id = intval($lol_film_id);
+		$sql = "update lol_film SET un_match_times = un_match_times + 1 where id = {$lol_film_id}";
+		return $this->_get_db()->query($sql);
 	}
 }

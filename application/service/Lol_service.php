@@ -18,5 +18,22 @@ class Lol_service extends MY_Service{
 		return $bts;
 	}
 
+	/**
+	 * 格式化数据库中的详情(很多/分割或者json串)
+	 * @param $lol_film_detail
+	 */
+	public function format_db_film_detail(&$lol_film_detail){
+		$lol_film_detail['other_names'] = explode('/', $lol_film_detail['other_names'] );
+		$lol_film_detail['actors'] = explode('/', $lol_film_detail['actors'] );
+		if(!empty($lol_film_detail['actors'])){
+			foreach($lol_film_detail['actors'] as $index => &$actor){
+				$actor = trim($actor);
+				if(empty($actor)){
+					unset($lol_film_detail['actors'][$index]);
+				}
+			}
+		}
+	}
+
 	/**************************************private methods****************************************************************************/
 }

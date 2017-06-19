@@ -7,19 +7,31 @@ class Match extends  MY_Controller{
 
 	}
 
-	public function manual($douban_id, $lol_url){
-
+	/**
+	 * 遍历lol内容
+	 * lol 1(只遍历最多一次未匹配的条目)
+	 * @param int $un_match_times_limit
+	 * @param int $start
+	 */
+	public function lol($un_match_times_limit = 0, $start = 0){
+		$this->Match_service->walk_lol_db($un_match_times_limit, $start);
 	}
 
-	public function lol(){
-		$this->Match_service->walk_lol_db();
-	}
-
+	/**
+	 * 手动对应 1000 "path/lol"
+	 * @param $douban_id
+	 * @param $url
+	 */
 	public function manual_lol($douban_id, $url){
 		$url = str_replace(':', '/', $url);
 		$this->Match_service->lol_manual($douban_id, $url);
 	}
 
+	/**
+	 * 手工添加资源
+	 * bt_path/bt_type/film_id/bt_name
+	 * @param $path
+	 */
 	public function me($path){
 		$path = str_replace(':', '/', $path);
 		$fp = fopen($path, 'r');
