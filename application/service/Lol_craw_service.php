@@ -24,6 +24,34 @@ class Lol_craw_service extends MY_Service{
         }
 	}
 
+    /***
+     * 抓取最近更新的资源
+     * @param $day_len
+     * @return bool
+     */
+    public function craw_up_films($day_len){
+        if(empty($day_len)){
+            return false;
+        }
+
+        $updated_urls = $this->_craw_updated_urls($day_len);
+
+        if(!empty($updated_urls)){
+            foreach($updated_urls as $url){
+                f_echo('find updated item :' . $url);
+                if($this->craw($url)){
+                    f_echo('success: ' . $url);
+                }else{
+                    f_echo('fail: ' . $url);
+                }
+            }
+        }else{
+            f_log_error('craw nothing updated');
+        }
+
+        return true;
+    }
+
     /**************************************private methods****************************************************************************/
 
     private function _up_film_detail($film_detail){
@@ -559,5 +587,41 @@ class Lol_craw_service extends MY_Service{
         }
 
         return '';
+    }
+
+    /**
+     * 获取最近几天更新的条目
+     * @param $day_length
+     * @return array
+     */
+    private function _craw_updated_urls($day_length){
+        $res = array();
+        if(!intval($day_length)){
+            return $res;
+        }
+
+        $days = array();
+        for($i = 0; $i < $day_length; $i++){
+            $days[] = date('m-d', time() - $i * 86400);
+        }
+
+        $html = $this->_get_film_html('http://www.loldytt.com/');
+        if(strlen($html) > 300){
+            $pattern = '#<li><p>(<em>)?(' . implode('|', $days) . ')([\s\S]*)</a></li>#U';
+            $matches = array();
+            preg_match_all($pattern, $html, $matches);
+            if(!empty($matches) && !empty($matches[0])){
+                $pattern = '#<a href="http://www.loldytt.com/([a-zA-Z/()0-9]*)">#U';
+                foreach($matches[0] as $part_html){
+                    $matches = array();
+                    preg_match($pattern, $part_html, $matches);
+                    if(!empty($matches) && !empty($matches[1])){
+                        $res[] = trim($matches[1], '/');
+                    }
+                }
+            }
+        }
+
+        return $res;
     }
 }
