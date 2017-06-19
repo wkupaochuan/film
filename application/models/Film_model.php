@@ -65,9 +65,15 @@ SQL;
 		return empty($result)? array():$result[0];
 	}
 
-	public function get($offset, $limit)
+	public function get($offset, $limit, $attrs = array())
 	{
-		$sql = "select * from film limit {$offset},{$limit}";
+        if(empty($attrs)){
+            $sql = "select * from film limit {$offset},{$limit}";
+        }else{
+            $attr_sql = implode(',', $attrs);
+            $sql = "select {$attr_sql} from film limit {$offset},{$limit}";
+        }
+
 		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}

@@ -42,6 +42,21 @@ class Film_name_model extends MY_Model {
 		return $query->result_array();
 	}
 
+    function get_by_film_id($film_id){
+        $film_id = intval($film_id);
+        $sql = "select * from {$this->_table} WHERE film_id = {$film_id}";
+        return $this->_c_query($sql);
+    }
+
+    function delete_by_ids($ids){
+        if(empty($ids)){
+            return;
+        }
+        $in_sql = implode(',' , $$ids);
+        $sql = "delete from {$this->_table} where id in ({$in_sql})";
+        $this->_get_db()->query($sql);
+    }
+
 	public function f1($offset, $limit){
 		$sql = "select * from film_names_copy limit {$offset},{$limit}";
 		return $this->_c_query($sql);

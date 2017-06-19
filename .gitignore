@@ -1,0 +1,4 @@
+application/config/database.php
+template_c/*
+template_m/*
+application/logs/*
