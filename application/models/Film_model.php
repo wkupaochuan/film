@@ -72,6 +72,13 @@ SQL;
 		return $query->result_array();
 	}
 
+	public function get_download_able_films($offset, $limit)
+	{
+		$sql = "select id, up_time from film where download_able = 1 limit {$offset},{$limit}";
+		$query = $this->_get_db()->query($sql);
+		return $query->result_array();
+	}
+
 	public function update_loldytt_info($id, $info)
 	{
 		$update_info = array(
@@ -164,6 +171,12 @@ SQL;
 			$sql = "select * from `film` where  download_able = 1 and `genre_p`%{$genre}=0 order by `year` desc limit {$offset},{$limit}";
 		}
 
+		return $this->_c_query($sql);
+	}
+
+	public function query_by_up_time($timestamp){
+		$timestamp = intval($timestamp);
+		$sql = "select * from {$this->_table} where download_able = 1 and up_time >= {$timestamp}";
 		return $this->_c_query($sql);
 	}
 }

@@ -1,49 +1,63 @@
 <?php
 class Sitemap extends MY_Controller {
 
-	/**
-	 * 生成每日更新的sitemap
-	 */
-	public function gen_daily_site_map(){
-		$stime = strtotime(date('Y-m-d', time() - 86400));
-		$this->load->model('Film_bt_model');
-		$up_film_ids = $this->Film_bt_model->query_by_time($stime);
+	public function up(){
+		$fp = fopen(FCPATH . 'sitemap_updated_index.xml', 'w+');
+		$stime = strtotime(date('Y-m-d', time()));
+		$this->load->service('Film_service');
+		$up_film_ids = $this->Film_service->get_up_films($stime);
+		$this->_write_sitemap_header($fp);
 		if(!empty($up_film_ids)){
-			$urls = array();
-			foreach($up_film_ids as $film_id){
-				$urls[] = array(
-					'url' => 'http://dyzyweb.com/film/detail?id=' . $film_id['film_id'],
+			foreach($up_film_ids as $film){
+				$this->_write_sitemap_item($fp, array(
+					'url' => 'http://dyf1024.com/film/detail?id=' . $film['id'],
 					'time' => $stime,
-				);
+				));
+			}
+		}
+		$this->_write_sitemap_footer($fp);
+		fclose($fp);
+	}
+
+	public function full(){
+		$fp = fopen(FCPATH . 'sitemap_index.xml', 'w+');
+		$page = 0;
+		$limit = 50;
+		$this->load->model('Film_model');
+		$this->_write_sitemap_header($fp);
+		while($page < 10000){
+			$films = $this->Film_model->get_download_able_films($page++ * $limit, $limit);
+
+			if(empty($films)){
+				break;
 			}
 
-			$this->_gen_up_sitemap($urls);
+			foreach($films as $film){
+				$this->_write_sitemap_item($fp, array(
+					'url' => 'http://dyf1024.com/film/detail?id=' . $film['id'],
+					'time' => $film['up_time'],
+				));
+			}
 		}
+		$this->_write_sitemap_footer($fp);
+		fclose($fp);
 	}
 
 	/************************************************* private methods *************************************************************/
 
-	/**
-	 * 生成sitemap
-	 * @param $urls
-	 * @return bool
-	 */
-	private function _gen_up_sitemap($urls){
-		if(empty($urls)){
-			return false;
-		}
+	private function _write_sitemap_header($fp){
+		fputs($fp, '<?xml version="1.0" encoding="utf-8"?>' . PHP_EOL);
+		fputs($fp, '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . PHP_EOL);
+	}
 
-		$this->_c_echo('<?xml version="1.0" encoding="utf-8"?>');
-		$this->_c_echo('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+	private function _write_sitemap_footer($fp){
+		fputs($fp, '</urlset>');
+	}
 
-		foreach($urls as $tmp){
-			$this->_c_echo('	<url>');
-			$this->_c_echo("		<loc>" . $tmp['url'] . "</loc>");
-			$this->_c_echo('		<lastmod>' . date('Y-m-d', $tmp['time']) .'</lastmod>');
-			$this->_c_echo('	</url>');
-		}
-
-		$this->_c_echo('</urlset>');
-
+	private function _write_sitemap_item($fp, $item){
+		fputs($fp, '	<url>' . PHP_EOL);
+		fputs($fp, "		<loc>" . $item['url'] . "</loc>"  . PHP_EOL);
+		fputs($fp, '		<lastmod>' . date('Y-m-d', $item['time']) .'</lastmod>'  . PHP_EOL);
+		fputs($fp, '	</url>'  . PHP_EOL);
 	}
 }

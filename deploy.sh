@@ -1,16 +1,27 @@
 #!/bin/bash
 
 type=$1
-excludeCmd="--exclude=application/config/database.php"
+excludeCmd="--exclude=application/config/database.php --exclude=templates_c/ --exclude=templates_m/ --exclude=sitemap_index.xml --exclude=sitemap_updated_index.xml"
+
 if [ $type -eq "1" ]
 then
-    rsync -tpcrv --delay-updates --timeout=60 $excludeCmd ./* filmfilm@166.62.86.13:/home/www/film/
+    user="filmfilm"
+    ip="166.62.86.13"
+    path="/home/www/film/"
 elif [ $type -eq "2" ]
 then
-rsync -tpcrv --delay-updates --timeout=60 $excludeCmd ./* root@120.76.76.195:/home/wangchuan/film/
+   user="root"
+   ip="120.76.76.195"
+   path="/home/wangchuan/film/"
+#rsync -tpcrv --delay-updates --timeout=60 $excludeCmd ./* root@120.76.76.195:/home/wangchuan/film/
 elif [ $type -eq "3" ]
 then
-    rsync -tpcrv --delay-updates --timeout=60 $excludeCmd ./* wangchuanchuan@10.108.214.103:/home/wangchuanchuan/film/film/
+   user="wangchuanchuan"
+   ip="10.108.214.103"
+   path="/home/wangchuanchuan/film/film/"
 else
     echo "false"
+    exit
 fi
+
+rsync -tpcrv --delay-updates --timeout=60 $excludeCmd ./*  $user@$ip:$path

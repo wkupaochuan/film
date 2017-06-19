@@ -54,43 +54,47 @@ class Lol_craw_service extends MY_Service{
 
     /**************************************private methods****************************************************************************/
 
-    private function _up_film_detail($film_detail){
-        if(empty($film_detail['url'])){
+    /**
+     * @param $lol_film_detail
+     * @return bool
+     */
+    private function _up_film_detail($lol_film_detail){
+        if(empty($lol_film_detail['url'])){
             return false;
         }
         $this->load->model('Lol_film_model');
 
         $up_film_detail = array(
-            "url" => $film_detail['url'],
-            "ch_cat" => empty($film_detail['ch_cat'])? '':$film_detail['ch_cat'],
-            "ch_name" => empty($film_detail['ch_name'])? '':$film_detail['ch_name'],
-            "lol_up_time" => empty($film_detail['lol_up_time'])? 0:$film_detail['lol_up_time'],
-            "year" => empty($film_detail['year'])? 0:$film_detail['year'],
-            "actors" => empty($film_detail['actors'])? '':implode('/', $film_detail['actors']),
-            "directors" => empty($film_detail['directors'])? '':implode('/',$film_detail['directors']),
-            "writers" => empty($film_detail['writers'])? '':implode('/',$film_detail['writers']),
-            "genres" => empty($film_detail['genres'])? '':implode('/',$film_detail['genres']),
-            "langs" => empty($film_detail['langs'])? '':implode('/',$film_detail['langs']),
-            "countries" => empty($film_detail['countries'])? '':implode('/',$film_detail['countries']),
-            "pub_times" => empty($film_detail['pub_times'])? '':json_encode($film_detail['pub_times']),
-            "other_names" => empty($film_detail['other_names'])? '':implode('/',$film_detail['other_names']),
+            "url" => $lol_film_detail['url'],
+            "ch_cat" => empty($lol_film_detail['ch_cat'])? '':$lol_film_detail['ch_cat'],
+            "ch_name" => empty($lol_film_detail['ch_name'])? '':$lol_film_detail['ch_name'],
+            "lol_up_time" => empty($lol_film_detail['lol_up_time'])? 0:$lol_film_detail['lol_up_time'],
+            "year" => empty($lol_film_detail['year'])? 0:$lol_film_detail['year'],
+            "actors" => empty($lol_film_detail['actors'])? '':implode('/', $lol_film_detail['actors']),
+            "directors" => empty($lol_film_detail['directors'])? '':implode('/',$lol_film_detail['directors']),
+            "writers" => empty($lol_film_detail['writers'])? '':implode('/',$lol_film_detail['writers']),
+            "genres" => empty($lol_film_detail['genres'])? '':implode('/',$lol_film_detail['genres']),
+            "langs" => empty($lol_film_detail['langs'])? '':implode('/',$lol_film_detail['langs']),
+            "countries" => empty($lol_film_detail['countries'])? '':implode('/',$lol_film_detail['countries']),
+            "pub_times" => empty($lol_film_detail['pub_times'])? '':json_encode($lol_film_detail['pub_times']),
+            "other_names" => empty($lol_film_detail['other_names'])? '':implode('/',$lol_film_detail['other_names']),
         );
 
-        $or_film_detail = $this->Lol_film_model->get_film_detail_by_url($film_detail['url']);
-        $film_id = null;
+        $or_film_detail = $this->Lol_film_model->get_film_detail_by_url($lol_film_detail['url']);
+        $lol_film_id = null;
 
         if(empty($or_film_detail)){
-            $film_id = $this->Lol_film_model->insert($up_film_detail);
+            $lol_film_id = $this->Lol_film_model->insert($up_film_detail);
         }else{
-            $film_id = $or_film_detail['id'];
-            $this->Lol_film_model->update_film_by_id($film_id, $up_film_detail);
+            $lol_film_id = $or_film_detail['id'];
+            $this->Lol_film_model->update_film_by_id($lol_film_id, $up_film_detail);
         }
 
         // 更新推荐
-        $this->_update_recoms($film_detail['url'], $film_detail['recom']);
+        $this->_update_recoms($lol_film_detail['url'], $lol_film_detail['recom']);
 
         // 更新资源
-        $this->_store_bts($film_detail, $film_id);
+        $this->_store_bts($lol_film_detail, $lol_film_id, !empty($or_film_detail)? $or_film_detail['lol_id']:0);
 
         return true;
     }
@@ -526,9 +530,10 @@ class Lol_craw_service extends MY_Service{
     /**
      * 存储bts
      * @param $film_detail
+     * @param $lol_film_id
      * @param $film_id
      */
-    private function _store_bts($film_detail, $film_id){
+    private function _store_bts($film_detail, $lol_film_id, $film_id = 0){
         $types = array(
             'thunder' => 1,
             'bt' => 2,
@@ -556,7 +561,7 @@ class Lol_craw_service extends MY_Service{
                         if(!in_array($bt['link'], $exist_urls)){
                             array_push($insert_data, array(
                                 'batch_id' => $batch_id,
-                                'film_id' => $film_id,
+                                'film_id' => $lol_film_id,
                                 'url' => $bt['link'],
                                 'name' => $bt['title'],
                             ));
@@ -569,6 +574,9 @@ class Lol_craw_service extends MY_Service{
         if(!empty($insert_data)){
             // insert bts
             $this->Lol_bt_model->insert_batch($insert_data);
+            // up film up_time
+            $this->load->model('Film_model');
+            !empty($film_id) && $this->Film_model->update_by_id($film_id, array('up_time' => time()));
         }
     }
 

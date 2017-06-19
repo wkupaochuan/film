@@ -33,16 +33,8 @@ class Film_service extends MY_Service{
 	 * @return array
 	 */
 	public function get_up_films($timestamp){
-		$films = array();
 		$this->load->model('Film_model');
-		$this->load->model('Film_bt_model');
-		$up_film_ids = $this->Film_bt_model->query_by_time($timestamp);
-		if(!empty($up_film_ids)){
-			$up_film_ids = array_column($up_film_ids, 'film_id');
-			$films = $this->Film_model->get_by_ids($up_film_ids);
-		}
-
-		return $films;
+		return $this->Film_model->query_by_up_time($timestamp);
 	}
 
 	/**
@@ -113,6 +105,4 @@ class Film_service extends MY_Service{
 	}
 
     /**************************************private methods****************************************************************************/
-
-
-} 
+}

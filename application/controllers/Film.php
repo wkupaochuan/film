@@ -32,7 +32,6 @@ class Film extends MY_Controller {
 			'search_res' => $search_result,
 		));
 
-
 		$this->display($tpl);
 	}
 

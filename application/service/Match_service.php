@@ -120,7 +120,8 @@ class Match_service extends MY_Service{
 			));
 			if($bt_id){
 				$this->Film_model->update_by_id($film_id, array(
-					'download_able' => 1
+					'download_able' => 1,
+					'up_time' => time(),
 				));
 			}else{
 				f_log_error('bt insert fail');
@@ -237,7 +238,7 @@ class Match_service extends MY_Service{
 		if(empty($film_id) || empty($lol_id)){
 			return false;
 		}
-		if($this->Film_model->update_by_id($film_id, array('lol_id' => $lol_id, 'download_able' => 1))){
+		if($this->Film_model->update_by_id($film_id, array('lol_id' => $lol_id, 'download_able' => 1, 'up_time' => time()))){
 			return $this->Lol_film_model->update_film_by_id($lol_id, array('film_id' => $film_id));
 		}
 
