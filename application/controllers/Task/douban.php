@@ -150,6 +150,7 @@ class Douban extends MY_Controller {
         $this->Douban_service->overwrite_names();
     }
 
+
 	/************************************************* private methods *************************************************************/
 
 	/**

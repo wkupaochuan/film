@@ -187,6 +187,7 @@ class Douban_service extends MY_Service{
         $limit = 50;
 
         while($page < 10000){
+            f_echo('page:' . $page);
             $films = $this->Film_model->get($page++ * $limit, $limit, array('id', 'douban_id', 'ch_name', 'or_name'));
             if(empty($films)){
                 break;

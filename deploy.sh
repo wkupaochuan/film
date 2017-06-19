@@ -24,4 +24,4 @@ else
     exit
 fi
 
-rsync -tpcrv --delay-updates --timeout=60 $excludeCmd ./*  $user@$ip:$path
+rsync -tpcrv --delay-updates -vzrtopg --delete --progress --timeout=60 $excludeCmd ./*  $user@$ip:$path
