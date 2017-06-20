@@ -15,6 +15,7 @@ class Match_service extends MY_Service{
 		$this->load->model('Lol_film_model');
 		$this->load->service('Lol_craw_service');
 		$this->load->service('Lol_service');
+        $this->load->service('Douban_service');
 		$this->load->model('Film_model');
 	}
 
@@ -75,6 +76,7 @@ class Match_service extends MY_Service{
 		$douban_db_detail = $this->Film_model->get_by_douban_id($douban_id);
 		if(empty($douban_db_detail)){
 			// 抓取
+            $this->Douban_service->craw_and_store_douban_film($douban_id);
 			$douban_db_detail = $this->Film_model->get_by_douban_id($douban_id);
 			if(empty($douban_db_detail)){
 				f_log_error('no douban film in db when match lol and douban');
