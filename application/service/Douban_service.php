@@ -92,9 +92,9 @@ class Douban_service extends MY_Service{
         $matches = array();
         preg_match($pattern, $res, $matches);
         if(!empty($matches) && !empty($matches[1])){
-            $this->_c_echo('需要验证码:' . $matches[1]);
+            f_echo('需要验证码:' . $matches[1]);
         }else{
-            $this->_c_echo('登录成功');
+	        f_echo('登录成功');
         }
     }
 
@@ -179,12 +179,16 @@ class Douban_service extends MY_Service{
         return true;
     }
 
-    /**
-     * 重写电影名称
-     */
-    public function overwrite_names(){
-        $page = $fail = $success = 0;
+	/**
+	 * 重写电影名称
+	 * @param int $start
+	 */
+    public function overwrite_names($start = 0){
+        $fail = $success = $nil = $done = 0;
         $limit = 50;
+	    $page = $start/$limit;
+
+	    $this->load->model('Test_t_model');
 
         while($page < 10000){
             f_echo('page:' . $page);
@@ -193,17 +197,22 @@ class Douban_service extends MY_Service{
                 break;
             }
 
+	        $success_ids = array();
             foreach($films as $db_film_detail){
+	            if(!empty($this->Test_t_model->search_by_item($db_film_detail['id']))){
+		            $done++;
+		            continue;
+	            }
                 $crawed_film_detail = $this->_craw_douban_detail($db_film_detail['douban_id'], array('ch_name', 'other_names'));
                 if(empty($crawed_film_detail)){
-                    f_log_error("fail on craw:" . $db_film_detail['douban_id']);
+                    f_log_error("fail on craw:" . $db_film_detail['douban_id'] . ", " . $db_film_detail['ch_name']);
+	                $fail++;
                     continue;
                 }
 
                 empty($crawed_film_detail['or_name']) && $crawed_film_detail['or_name'] = '';
                 $crawed_film_detail['other_names'][] =  $crawed_film_detail['ch_name'];
                 $crawed_film_detail['other_names'][] =  $crawed_film_detail['or_name'];
-
 
                 $this->Film_model->update_by_id($db_film_detail['id'], array(
                     'ch_name' => $crawed_film_detail['ch_name'],
@@ -238,11 +247,50 @@ class Douban_service extends MY_Service{
 //                    exit;
 //                }
 
-                !empty($up_names) && $this->Film_name_model->insert_batch($up_names);
-                !empty($in_db_err_names) && $this->Film_name_model->delete_by_ids($in_db_err_names);
+	            if(!empty($up_names)){
+		            $this->Film_name_model->insert_batch($up_names);
+		            f_echo("new names :" . $db_film_detail['id'] . ':' . implode('/', array_column($up_names, 'name')));
+	            }
+	            if(!empty($in_db_err_names)){
+		            $this->Film_name_model->delete_by_ids($in_db_err_names);
+		            f_echo("delete names :" . $db_film_detail['id'] . ':' . implode('/', $in_db_err_names));
+	            }
+
+	            if(empty($up_names) && empty($in_db_err_names)){
+		            f_echo('nothing to update:' . $db_film_detail['id']);
+		            $nil++;
+	            }else{
+		            f_echo('update success' . $db_film_detail['id']);
+		            $success++;
+	            }
+	            $success_ids[] = $db_film_detail['id'];
             }
+
+	        $this->Test_t_model->insert_batch($success_ids);
         }
+
+	    f_echo('overwrite names end:' . $nil . '-' . $success . '-' . $fail. '-' . $done);
     }
+
+	/**
+	 * 获取更新的条目
+	 * @param $url
+	 * @return array
+	 */
+	public function craw_updated_items($url){
+		$douban_ids = array();
+		$res_str = $this->_request_douban($url);
+		if(!empty($res_str)){
+			$items = json_decode($res_str, true);
+			if(!empty($items) && !empty($items['subjects'])){
+				foreach($items['subjects'] as $item){
+					$douban_ids[] = $item['id'];
+				}
+			}
+		}
+
+		return $douban_ids;
+	}
 
     /**************************************private methods****************************************************************************/
 

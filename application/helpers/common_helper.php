@@ -61,7 +61,8 @@ function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(),
 
 		// 7(无法连接到主机), 28(连接超时)
 		if($errno == 7 || $errno == 28){
-			sleep(1);
+			f_log_error('curl fail.errno:' . $errno . ', and we are retrying');
+			sleep(rand(1,5));
 		}
 	}
 	curl_close($ch);

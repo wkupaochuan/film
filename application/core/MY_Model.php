@@ -74,4 +74,15 @@ class MY_Model extends CI_Model {
 		$query_res = $this->_c_query($sql);
 		return empty($query_res)? array():$query_res[0];
 	}
+
+	protected function _insert_batch($datas){
+		$this->_get_db()->insert_batch($this->_table, $datas);
+		return $this->_affected_rows();
+	}
+
+	/**************************************private methods****************************************************************************/
+
+	private function _affected_rows(){
+		return $this->_get_db()->affected_rows();
+	}
 }

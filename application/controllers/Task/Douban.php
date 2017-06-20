@@ -132,7 +132,7 @@ class Douban extends MY_Controller {
 		);
 
 		foreach($url_arr as $key => $url){
-			$douban_ids = $this->_craw_updated_items($url);
+			$douban_ids = $this->Douban_service->craw_updated_items($url);
 			f_echo($key . ':' . implode(',', $douban_ids));
 			if(!empty($douban_ids)){
 				foreach($douban_ids as $douban_id){
@@ -159,55 +159,11 @@ class Douban extends MY_Controller {
 		$this->Douban_service->login($cp, $cp_id);
 	}
 
-    public function overwrite(){
+    public function overwrite($start = 0){
+	    $start_time = time();
+	    f_echo(PHP_EOL . "start " . date('Y-m-d H:i:s'));
         $this->Douban_service->overwrite_names();
+	    f_echo("end. cost " . (time() - $start_time));
     }
 
-
-	/************************************************* private methods *************************************************************/
-
-	/**
-	 * 获取更新的条目
-	 * @param $url
-	 * @return array
-	 */
-	private function _craw_updated_items($url){
-		$douban_ids = array();
-		$res_str = $this->_request_douban_login($url);
-		if(!empty($res_str)){
-			$items = json_decode($res_str, true);
-			if(!empty($items) && !empty($items['subjects'])){
-				foreach($items['subjects'] as $item){
-					$douban_ids[] = $item['id'];
-				}
-			}
-		}
-
-		return $douban_ids;
-	}
-
-
-	/**
-	 * 采用登陆后的cookie来请求
-	 * @param $url
-	 * @param array $post_data
-	 * @return mixed|string
-	 */
-	private function _request_douban_login($url, $post_data = array()){
-		static $r_time;
-		$s_intval = rand(3,10);
-		if(!empty($r_time) && (time() - $r_time) > $s_intval ){
-			sleep(1);
-		}
-
-		$header = array(
-			'Accept' => '*/*',
-		    'Accept-Encoding' => 'gzip, deflate',
-		    'Accept-Language' => 'zh-CN,zh;q=0.8',
-		    'Connection' => 'keep-alive',
-		    'Referer' => 'https => //accounts.douban.com/login?alias=*******略',
-		    'User-Agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36',
-		);
-		return f_curl($url, $post_data, $this->douban_login_cookie, $header);
-	}
 }

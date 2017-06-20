@@ -52,7 +52,7 @@ class Film_name_model extends MY_Model {
         if(empty($ids)){
             return;
         }
-        $in_sql = implode(',' , $$ids);
+        $in_sql = implode(',' , $ids);
         $sql = "delete from {$this->_table} where id in ({$in_sql})";
         $this->_get_db()->query($sql);
     }

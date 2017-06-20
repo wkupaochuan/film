@@ -1,7 +1,7 @@
 #!/bin/bash
 
 type=$1
-excludeCmd="--exclude=application/config/database.php --exclude=application/logs/ --exclude=templates_c/ --exclude=templates_m/ --exclude=sitemap_index.xml --exclude=sitemap_updated_index.xml"
+excludeCmd="--exclude=application/config/database.php --exclude=application/logs/*.log --exclude=application/logs/archive/* --exclude=templates_c/ --exclude=templates_m/ --exclude=sitemap_index.xml --exclude=sitemap_updated_index.xml"
 
 if [ $type -eq "1" ]
 then
@@ -13,7 +13,6 @@ then
    user="root"
    ip="120.76.76.195"
    path="/home/wangchuan/film/"
-#rsync -tpcrv --delay-updates --timeout=60 $excludeCmd ./* root@120.76.76.195:/home/wangchuan/film/
 elif [ $type -eq "3" ]
 then
    user="wangchuanchuan"
