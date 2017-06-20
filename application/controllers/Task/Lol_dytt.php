@@ -17,6 +17,7 @@ class Lol_dytt extends MY_Controller {
 	 */
 	public function craw_films_by_recom(){
 		$start_time = time();
+		f_echo(PHP_EOL . "start " . date('Y-m-d H:i:s'));
 		$page = 0;
 		$limit = 50;
 		$total = $fail = $success = 0;
@@ -44,7 +45,7 @@ class Lol_dytt extends MY_Controller {
 			}
 		}
 
-		f_echo("end. cost " . (time() - $start_time) . ":" . $total . "-" . $success . "-" . $fail);
+		f_echo("end. cost " . (time() - $start_time) . ":" . $total . "-" . $success . "-" . $fail. PHP_EOL);
 	}
 
 	/**
@@ -57,8 +58,9 @@ class Lol_dytt extends MY_Controller {
 		}
 
 		$start_time = time();
+		f_echo(PHP_EOL . "start " . date('Y-m-d H:i:s') . ', days ' . $day_length);
 		$this->Lol_craw_service->craw_up_films($day_length);
-		$this->_c_echo("end. cost " . (time() - $start_time));
+		f_echo("end. cost " . (time() - $start_time) . PHP_EOL);
 	}
 
 	/**

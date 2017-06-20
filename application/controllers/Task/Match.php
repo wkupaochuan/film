@@ -14,7 +14,10 @@ class Match extends  MY_Controller{
 	 * @param int $start
 	 */
 	public function lol($un_match_times_limit = 0, $start = 0){
+		$start_time = time();
+		f_echo(PHP_EOL . "start " . date('Y-m-d H:i:s') . ', un_match_times_limit--' . $un_match_times_limit . ', start--' . $start);
 		$this->Match_service->walk_lol_db($un_match_times_limit, $start);
+		f_echo("end. cost " . (time() - $start_time));
 	}
 
 	/**

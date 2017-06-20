@@ -35,19 +35,26 @@ class Lol_craw_service extends MY_Service{
         }
 
         $updated_urls = $this->_craw_updated_urls($day_len);
+        $total = count($updated_urls);
+        $fail = $success = 0;
+        f_echo("crawed urls:" . $total . PHP_EOL . implode(PHP_EOL, array_column($updated_urls, 'name')));
 
         if(!empty($updated_urls)){
             foreach($updated_urls as $url){
-                f_echo('find updated item :' . $url);
-                if($this->craw($url)){
-                    f_echo('success: ' . $url);
+                f_echo('find updated item :' . $url['name'] . '--' . $url['url']);
+                if($this->craw($url['url'])){
+                    f_echo('success: ' .  $url['name'] . '--' . $url['url']);
+                    $success++;
                 }else{
-                    f_echo('fail: ' . $url);
+                    f_echo('fail: ' .  $url['name'] . '--' . $url['url']);
+                    $fail++;
                 }
             }
         }else{
             f_log_error('craw nothing updated');
         }
+
+        f_echo("crawed result:" . $total . '-' . $success . '-' . $fail);
 
         return true;
     }
@@ -78,6 +85,7 @@ class Lol_craw_service extends MY_Service{
             "countries" => empty($lol_film_detail['countries'])? '':implode('/',$lol_film_detail['countries']),
             "pub_times" => empty($lol_film_detail['pub_times'])? '':json_encode($lol_film_detail['pub_times']),
             "other_names" => empty($lol_film_detail['other_names'])? '':implode('/',$lol_film_detail['other_names']),
+            "mtime" => time(),
         );
 
         $or_film_detail = $this->Lol_film_model->get_film_detail_by_url($lol_film_detail['url']);
@@ -94,7 +102,7 @@ class Lol_craw_service extends MY_Service{
         $this->_update_recoms($lol_film_detail['url'], $lol_film_detail['recom']);
 
         // 更新资源
-        $this->_store_bts($lol_film_detail, $lol_film_id, !empty($or_film_detail)? $or_film_detail['lol_id']:0);
+        $this->_store_bts($lol_film_detail, $lol_film_id, !empty($or_film_detail)? $or_film_detail['film_id']:0);
 
         return true;
     }
@@ -619,12 +627,15 @@ class Lol_craw_service extends MY_Service{
             $matches = array();
             preg_match_all($pattern, $html, $matches);
             if(!empty($matches) && !empty($matches[0])){
-                $pattern = '#<a href="http://www.loldytt.com/([a-zA-Z/()0-9]*)">#U';
+                $pattern = '#<a href="http://www.loldytt.com/([a-zA-Z/()0-9]*)">([\s\S]*)</a>#U';
                 foreach($matches[0] as $part_html){
                     $matches = array();
                     preg_match($pattern, $part_html, $matches);
                     if(!empty($matches) && !empty($matches[1])){
-                        $res[] = trim($matches[1], '/');
+                        $res[] = array(
+                            'url' => trim($matches[1], '/'),
+                            'name' => trim($matches[2]),
+                        );
                     }
                 }
             }

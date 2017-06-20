@@ -31,6 +31,7 @@ class Match_service extends MY_Service{
 		while($page < 10000){
 			f_echo ($page);
 			$films = $this->Lol_film_model->get_un_matched_films($page++ * $limit, $limit, $un_match_times_limit);
+			f_echo('find un matched films :' . count($films));
 
 			if(empty($films)){
 				break;

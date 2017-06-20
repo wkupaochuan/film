@@ -6,6 +6,9 @@ class Douban extends MY_Controller {
     public function __construct(){
         parent::__construct();
         $this->load->service('Douban_service');
+	    $this->load->model('Film_model');
+	    $this->load->model('Film_recom_model');
+	    $this->load->model('Un_douban_model');
     }
 
 	public function test($douban_id){
@@ -69,32 +72,34 @@ class Douban extends MY_Controller {
 		if($login == 1){
 			$this->_login = true;
 		}
+
+		$start_time = time();
+		f_echo(PHP_EOL . "start " . date('Y-m-d H:i:s'));
+
+		$fail = $success = 0;
+
 		$page = 0;
 		$limit = 20;
-		$fail = 0;
-		$this->load->model('Film_model');
-		$this->load->model('Film_recom_model');
-		$this->load->model('Un_douban_model');
 		while($page++ < 100000){
 			$un_crawed_douban_ids = $this->Un_douban_model->get($fail, $limit);
 			if(empty($un_crawed_douban_ids)){
-				echo 'end ' . $page . PHP_EOL;
-				// 重新开始
-//				$page = 0;
 				break;
 			}
 
 			foreach($un_crawed_douban_ids as $tmp){
 				$douban_id = $tmp['douban_id'];
-				echo 'no exist:' . $douban_id . PHP_EOL;
+				f_echo('no exist:' . $douban_id );
 				if($this->Douban_service->craw_and_store_douban_film($douban_id)){
-					echo 'success:' . $douban_id . PHP_EOL;
+					f_echo('success:' . $douban_id );
+					$success++;
 				}else{
-					echo 'fail:' . $douban_id . PHP_EOL;
+					f_echo('fail:' . $douban_id );
 					$fail++;
 				}
 			}
 		}
+
+		f_echo("end. cost " . (time() - $start_time) . ":" . ($success + $fail) . "-" . $success . "-" . $fail. PHP_EOL);
 	}
 
 	public function hand_process_douban($type, $str){
@@ -115,6 +120,10 @@ class Douban extends MY_Controller {
 	}
 
 	public function craw_daily(){
+		$start_time = time();
+		f_echo(PHP_EOL . "start " . date('Y-m-d H:i:s'));
+		$fail = $success = 0;
+
 		$url_arr = array(
 			"movive_recom" => "https://movie.douban.com/j/search_subjects?type=movie&tag=%E7%83%AD%E9%97%A8&sort=recommend&page_limit=20&page_start=0",
 			"movive_time" => "https://movie.douban.com/j/search_subjects?type=movie&tag=%E7%83%AD%E9%97%A8&sort=time&page_limit=20&page_start=0",
@@ -124,17 +133,21 @@ class Douban extends MY_Controller {
 
 		foreach($url_arr as $key => $url){
 			$douban_ids = $this->_craw_updated_items($url);
-			$this->_c_echo($key . ':' . implode(',', $douban_ids));
+			f_echo($key . ':' . implode(',', $douban_ids));
 			if(!empty($douban_ids)){
 				foreach($douban_ids as $douban_id){
 					if($this->Douban_service->craw_and_store_douban_film($douban_id)){
-						$this->_c_echo('success ' . $douban_id);
+						$success++;
+						f_echo('success ' . $douban_id);
 					}else{
-						$this->_c_echo('fail ' . $douban_id);
+						$fail++;
+						f_echo('fail ' . $douban_id);
 					}
 				}
 			}
 		}
+
+		f_echo("end. cost " . (time() - $start_time) . ":" . ($success + $fail) . "-" . $success . "-" . $fail. PHP_EOL);
 	}
 
 	/**
