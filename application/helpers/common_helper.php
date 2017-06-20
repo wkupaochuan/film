@@ -12,7 +12,7 @@ function f_log_error($msg, $function = 0, $line = 0){
 	}
 }
 
-function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(), $retry_times = 3, $user_proxy = true){
+function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(), $retry_times = 1, $user_proxy = true){
 	$proxy = array();
 	$proxy_array = array(
 		array(
@@ -62,7 +62,7 @@ function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(),
 		// 7(无法连接到主机), 28(连接超时)
 		if($errno == 7 || $errno == 28){
 			f_log_error('curl fail.errno:' . $errno . ', and we are retrying');
-			sleep(rand(1,5));
+//			sleep(rand(1,5));
 		}
 	}
 	curl_close($ch);

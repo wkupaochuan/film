@@ -162,7 +162,7 @@ class Douban extends MY_Controller {
     public function overwrite($start = 0){
 	    $start_time = time();
 	    f_echo(PHP_EOL . "start " . date('Y-m-d H:i:s'));
-        $this->Douban_service->overwrite_names();
+        $this->Douban_service->overwrite_names($start);
 	    f_echo("end. cost " . (time() - $start_time));
     }
 

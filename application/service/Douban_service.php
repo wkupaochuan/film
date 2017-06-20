@@ -199,7 +199,8 @@ class Douban_service extends MY_Service{
 
 	        $success_ids = array();
             foreach($films as $db_film_detail){
-	            if(!empty($this->Test_t_model->search_by_item($db_film_detail['id']))){
+                $done_ids = $this->Test_t_model->search_by_item($db_film_detail['id']);
+	            if(!empty($done_ids)){
 		            $done++;
 		            continue;
 	            }
@@ -496,7 +497,7 @@ class Douban_service extends MY_Service{
 	 * @return mixed|string
 	 */
 	private function _request_douban($url, $post_data = array()){
-		sleep(rand(3,20));
+		sleep(rand(1,7));
 
 		$header = array(
 			'Accept' => '*/*',
@@ -810,10 +811,10 @@ class Douban_service extends MY_Service{
         }
 
         $douban_link = "https://movie.douban.com/subject/{$douban_id}/";
-        $retry = 3;
+        $retry = 1;
         while($retry--){
             $html = $this->_request_douban($douban_link);
-            if($this->_check_for_douban_detail_html($html)) {
+            if(!$this->_check_for_douban_detail_html($html)) {
                 continue;
             }else{
                 $detail_html = $html;
@@ -834,7 +835,7 @@ class Douban_service extends MY_Service{
             return false;
         }
 
-        return strpos($html, '<div id="mainpic"') === false;
+        return strpos($html, '<div id="mainpic"') !== false;
     }
 
 }
