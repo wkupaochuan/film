@@ -184,6 +184,10 @@ class Douban_service extends MY_Service{
 	 * @param int $start
 	 */
     public function overwrite_names($start = 0){
+	    $this->load->service('parser/Parser_douban');
+	    $this->Parser_douban->test();
+	    exit;
+
         $fail = $success = $nil = $done = 0;
         $limit = 50;
 	    $page = $start/$limit;
@@ -821,6 +825,12 @@ class Douban_service extends MY_Service{
                 break;
             }
         }
+
+	    // todo 临时保存解析的Html
+	    if($this->_check_for_douban_detail_html($detail_html)){
+		    $this->load->service('parser/Parser_douban');
+		    $this->Parser_douban->process($douban_id, $detail_html);
+	    }
 
         return $detail_html;
     }
