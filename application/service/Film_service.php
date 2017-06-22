@@ -68,11 +68,12 @@ class Film_service extends MY_Service{
 		}
 
 		$film_detail['actors'] = str_replace(',', '/', $film_detail['actors']);
-		$film_detail['genre'] = str_replace(',', '/', $film_detail['genre']);
+		$film_detail['genre'] = str_replace(',', ' / ', $film_detail['genre']);
 		$film_detail['other_names'] = !empty($film_detail['other_names'])? json_decode($film_detail['other_names'], true):array();
 		$film_detail['comments'] = !empty($film_detail['comments'])? json_decode($film_detail['comments'], true):array();
 		$film_detail['related_pics'] = $this->Film_pic_model->get_by_film_id($film_detail['id']);
-		!empty($film_detail['recom_douban_id']) && $film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['id']);
+		!empty($film_detail['related_pics']) && $film_detail['related_pics'] = array_slice($film_detail['related_pics'], 0, 6);
+ 		!empty($film_detail['recom_douban_id']) && $film_detail['recom_films'] = $this->Film_model->get_recom_films($film_detail['id']);
 
 		$all_bts = array();
 

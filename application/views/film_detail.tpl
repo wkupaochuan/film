@@ -132,39 +132,6 @@
 			{/foreach}
 		{/if}
 
-
-		<!--获奖-->
-		<!--
-		<div class="mod">
-			<div class="hd">
-				<h4><i class="">当幸福来敲门的获奖情况</i> · · · · · · </h4>
-			</div>
-
-			<ul class="award">
-				<li>
-					<a href="https://movie.douban.com/awards/Oscar/79/">第79届奥斯卡金像奖</a>
-				</li>
-				<li>最佳男主角(提名)</li>
-				<li><a href='https://movie.douban.com/celebrity/1027138/' target='_blank'>威尔·史密斯</a></li>
-			</ul>
-			<ul class="award">
-				<li>
-					<a href="https://movie.douban.com/awards/mtvma/16/">第16届MTV电影奖</a>
-				</li>
-				<li>MTV电影奖 最佳表演(提名)</li>
-				<li><a href='https://movie.douban.com/celebrity/1027138/' target='_blank'>威尔·史密斯</a></li>
-			</ul>
-
-			<ul class="award">
-				<li>
-					<a href="https://movie.douban.com/awards/mtvma/16/">第16届MTV电影奖</a>
-				</li>
-				<li>MTV电影奖 突破表演奖</li>
-				<li><a href='https://movie.douban.com/celebrity/1010532/' target='_blank'>贾登·史密斯</a></li>
-			</ul>
-		</div>
-		-->
-
 		<!--类似推荐-->
 		{if count($data.film_detail.recom_films) gt 0}
 			<div id="recommendations">
