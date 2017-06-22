@@ -13,9 +13,6 @@ excludeCmd=`cat << EXCLUDECMD
 EXCLUDECMD
 `
 
-echo $excludeCmd
-exit
-
 if [ $type -eq "1" ]
 then
     user="filmfilm"
@@ -36,4 +33,4 @@ else
     exit
 fi
 
-rsync -tpcrv --delay-updates -vzrtopg --progress --timeout=60 $excludeCmd ./*  $user@$ip:$path
+rsync -tpcrvzog --delay-updates --progress --timeout=60 $excludeCmd ./*  $user@$ip:$path
