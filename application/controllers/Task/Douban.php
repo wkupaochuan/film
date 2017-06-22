@@ -11,6 +11,10 @@ class Douban extends MY_Controller {
 	    $this->load->model('Un_douban_model');
     }
 
+	public function test1(){
+		$this->Douban_service->tmp_store_detail_htmls();
+	}
+
 	public function test($douban_id){
 		$this->load->service('Douban_service');
 		$this->Douban_service->craw_comments($douban_id);

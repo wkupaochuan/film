@@ -11,6 +11,21 @@ class Parser_douban extends MY_Service{
 		file_put_contents($this->_cal_path($douban_id), $des_html);
 	}
 
+	/**
+	 * 计算路径
+	 * @param $douban_id
+	 * @return string
+	 */
+	public function _cal_path($douban_id){
+		$md5 = md5($douban_id);
+		$dir = APPPATH . 'data/douban/' . implode('/', array($md5[29], $md5[30], $md5[31])) . '/' ;
+		if(!is_dir($dir)){
+			mkdir($dir, 0776, true);
+		}
+		$path = $dir . $douban_id . '.html';
+		return $path;
+	}
+
 	/**************************************private methods****************************************************************************/
 
 	/**
@@ -82,7 +97,7 @@ HTML;
 	 */
 	private function _parse_dom_els($html){
 		$doc = new DOMDocument();
-		$doc->loadHTML($html);
+		@$doc->loadHTML($html);
 
 		// title
 		$title_node = $this->_get_unique_element_by_tag($doc, 'title');
@@ -118,18 +133,5 @@ HTML;
 		);
 	}
 
-	/**
-	 * 计算路径
-	 * @param $douban_id
-	 * @return string
-	 */
-	private function _cal_path($douban_id){
-		$md5 = md5($douban_id);
-		$dir = APPPATH . 'data/douban/' . implode('/', array($md5[29], $md5[30], $md5[31])) . '/' ;
-		if(!is_dir($dir)){
-			mkdir($dir, 0776, true);
-		}
-		$path = $dir . $douban_id . '.html';
-		return $path;
-	}
+
 }

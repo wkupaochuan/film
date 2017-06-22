@@ -297,6 +297,42 @@ class Douban_service extends MY_Service{
 		return $douban_ids;
 	}
 
+	public function tmp_store_detail_htmls($t = 0){
+		$page = 0 ;
+		$fail = $success = $ex = 0;
+		$limit = 10;
+
+		$start_time = time();
+		$this->load->service('parser/Parser_douban');
+		while($page < 10000){
+			$films = $this->Film_model->get($page++ * $limit, $limit, array('douban_id'));
+			if(empty($films)){
+				break;
+			}
+
+			$douban_ids = array_column($films, 'douban_id');
+
+			foreach($douban_ids as $douban_id){
+				$path = $this->Parser_douban->_cal_path($douban_id);
+				if(!file_exists($path)){
+					$this->_get_douban_detail_html($douban_id);
+					if(!file_exists($path)){
+						f_echo('fail ' . $douban_id);
+						$fail++;
+					}else{
+						f_echo('success ' . $douban_id);
+						$success++;
+					}
+				}else{
+					f_echo('exisit ' . $douban_id);
+					$ex++;
+				}
+			}
+		}
+
+		f_echo('end cost ' . (time()  - $start_time) . ':' . $success . '-' . $fail . '-' . $ex);
+	}
+
     /**************************************private methods****************************************************************************/
 
 	/**

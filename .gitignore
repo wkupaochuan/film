@@ -3,3 +3,4 @@ template_c/*
 template_m/*
 application/logs/*.log
 application/logs/archive/*
+application/data/douban/*

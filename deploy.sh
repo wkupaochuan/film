@@ -1,7 +1,20 @@
 #!/bin/bash
 
 type=$1
-excludeCmd="--exclude=application/config/database.php --exclude=application/logs/*.log --exclude=application/logs/archive/* --exclude=templates_c/ --exclude=templates_m/ --exclude=sitemap_index.xml --exclude=sitemap_updated_index.xml"
+excludeCmd=`cat << EXCLUDECMD
+--exclude=application/config/database.php
+--exclude=application/logs/*.log
+--exclude=application/logs/archive/*
+--exclude=application/data/douban/*
+--exclude=templates_c/
+--exclude=templates_m/
+--exclude=sitemap_index.xml
+--exclude=sitemap_updated_index.xml"
+EXCLUDECMD
+`
+
+echo $excludeCmd
+exit
 
 if [ $type -eq "1" ]
 then
@@ -23,4 +36,4 @@ else
     exit
 fi
 
-rsync -tpcrv --delay-updates -vzrtopg --delete --progress --timeout=60 $excludeCmd ./*  $user@$ip:$path
+rsync -tpcrv --delay-updates -vzrtopg --progress --timeout=60 $excludeCmd ./*  $user@$ip:$path
