@@ -7,6 +7,7 @@ class Film_service extends MY_Service{
 		parent::__construct();
 		$this->load->model('Film_model');
 		$this->load->model('Film_pic_model');
+        $this->load->model('Film_ac_log_model');
 		$this->load->service('Lol_service');
 	}
 
@@ -110,6 +111,20 @@ class Film_service extends MY_Service{
 
 		return $film_detail;
 	}
+
+    /**
+     * 获取最近热门
+     * @return mixed
+     */
+    public function get_last_week_hot_films(){
+        $hot_film_ids = $this->Film_ac_log_model->get_hot_films(time() - 86400*7, time(), 18);
+        if(!empty($hot_film_ids)){
+            $hot_film_ids = array_column($hot_film_ids, 'film_id');
+            $hot_films = $this->Film_model->get_by_ids($hot_film_ids, array('id', 'douban_id', 'ch_name', 'l_post_cover', 'b_post_cover', 'douban_post_cover'));
+        }
+
+        return $hot_films;
+    }
 
     /**************************************private methods****************************************************************************/
 

@@ -112,8 +112,6 @@ class MY_Model extends CI_Model {
 	 * @return mixed
 	 */
 	protected function _exe_write_sql($sql){
-		$x = var_export($this->_get_db(self::DB_TYPE_MASTER), true);
-		echo $x;exit;
 		$this->_get_db(self::DB_TYPE_MASTER)->query($sql);
 		return $this->_affected_rows();
 	}

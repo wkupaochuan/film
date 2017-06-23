@@ -8,6 +8,42 @@
 </div>
 
 <div class="panel">
+    <div class="panel-heading">
+        <h3 class="panel-title">最近热门</h3>
+    </div>
+
+    {if count($data.hot_films) gt 0 }
+        <div class="container">
+            {foreach from=$data.hot_films key=index item=film}
+                {if $index%6 eq 0 }
+                    <div class="row">
+                {/if}
+                <div class="col-md-2">
+                    <div class="thumbnail">
+                        <a href="/film/detail?id={$film.id}" title="{$film.ch_name}">
+                            {if $film.b_post_cover ne ''}
+                                <img class="img-responsive"  src="{$PIC_HOST}{$film.b_post_cover}" alt="{$film.ch_name}海报" />
+                            {elseif $film.l_post_cover ne ''}
+                                <img class="img-responsive"  src="{$PIC_HOST}{$film.l_post_cover}" alt="{$film.ch_name}海报"　/>
+                            {else}
+                                <img class="img-responsive" src="{$film.douban_post_cover}" alt="{$film.ch_name}海报"/>
+                            {/if}
+                        </a>
+                        <div class="caption">
+                            <p><a href="/film/detail?id={$film.id}')" class="" >{$film.ch_name}</a></p>
+                        </div>
+                        <p></p>
+                    </div>
+                </div>
+                {if ($index+1)%6 eq 0 }
+                    </div>
+                {/if}
+            {/foreach}
+        </div>
+    {/if}
+</div>
+
+<div class="panel">
 	<div class="panel-heading">
 		<h3 class="panel-title">最近更新</h3>
 	</div>
@@ -21,10 +57,10 @@
 						<div class="col-md-2">
 							<div class="thumbnail">
 								<a href="/film/detail?id={$film.id}" title="{$film.ch_name}">
-									{if $film.b_post_cover ne ''}
-										<img class="img-responsive"  src="{$PIC_HOST}{$film.b_post_cover}" alt="{$film.ch_name}海报" />
-									{elseif $recom_film.l_post_cover ne ''}
-										<img class="img-responsive"  src="{$PIC_HOST}{$film.l_post_cover}" alt="{$film.ch_name}海报"　/>
+                                    {if $film.b_post_cover ne ''}
+                                        <img class="img-responsive"  src="{$PIC_HOST}{$film.b_post_cover}" alt="{$film.ch_name}海报" />
+                                    {elseif $film.l_post_cover ne ''}
+                                        <img class="img-responsive"  src="{$PIC_HOST}{$film.l_post_cover}" alt="{$film.ch_name}海报"　/>
 									{else}
 										<img class="img-responsive" src="{$film.douban_post_cover}" alt="{$film.ch_name}海报"/>
 									{/if}

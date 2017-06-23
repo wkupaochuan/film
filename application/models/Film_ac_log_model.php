@@ -27,9 +27,6 @@ class Film_ac_log_model extends MY_Model{
 			INSERT INTO {$this->_table} (film_id,`day`,`ac_times`) VALUES ({$film_id}, {$day}, {$times})
 			ON DUPLICATE KEY UPDATE ac_times=ac_times+{$times}
 SQL;
-		$sql = <<<SQL
-			select count(1) from film;
-SQL;
 
 		return $this->_exe_write_sql($sql);
 	}

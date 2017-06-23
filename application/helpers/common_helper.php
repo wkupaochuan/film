@@ -128,5 +128,5 @@ function from_robot()
 		return false;
 	}
 	$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
-	return strpos($agent, 'Spider') ||  strpos($agent, 'Googlebot') || strpos($agent, 'MJ12bot') || strpos($agent, 'Baiduspider');
+    return strpos($agent, 'spider') ||  strpos($agent, 'googlebot') || strpos($agent, 'mj12bot') || strpos($agent, 'baiduspider');
 }

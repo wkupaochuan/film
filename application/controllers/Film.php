@@ -8,6 +8,7 @@ class Film extends MY_Controller {
 	public function index()
 	{
 		$search_words = $this->input->get('film_name');
+        $hot_films = array();
 
 		if(!empty($search_words)) {
 			$tpl = 'search_home.tpl';
@@ -16,6 +17,7 @@ class Film extends MY_Controller {
 		}else{
 			$tpl = 'home.tpl';
 			$this->load->service('Film_service');
+            $hot_films = $this->Film_service->get_last_week_hot_films();
 			$search_result = $this->Film_service->get_up_films(strtotime(date('Y-m-d', time() - 86400)));
 		}
 
@@ -30,6 +32,7 @@ class Film extends MY_Controller {
 		$this->assign('data', array(
 			'search_words' => $search_words,
 			'search_res' => $search_result,
+            'hot_films' => $hot_films,
 		));
 
 		$this->display($tpl);
