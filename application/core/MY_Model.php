@@ -1,10 +1,16 @@
 <?php
 class MY_Model extends CI_Model {
+	const DB_TYPE_MASTER = 'master';
+	const DB_TYPE_SLAVE = 'slave';
+
 	protected $_table = '';
-	private static $last_query_time = 0;
+	private static $slave_last_query_time = 0;
+	private static $master_last_query_time = 0;
+	private static $master_db = null;
+
+
 	public function __construct() {
 		parent::__construct();
-//		$this->load->database();
 	}
 
 	/**
@@ -16,31 +22,51 @@ class MY_Model extends CI_Model {
 		if(empty($this->_table) || empty($data)){
 			return false;
 		}
-		$this->_get_db()->insert($this->_table, $data);
-		return $this->_get_db()->insert_id();
+		$this->_get_db(self::DB_TYPE_MASTER)->insert($this->_table, $data);
+		return $this->_get_db(self::DB_TYPE_MASTER)->insert_id();
 	}
 
-	protected function _get_db(){
+	/**
+	 * 更新
+	 * @param $update_info
+	 * @param $where
+	 * @return mixed
+	 */
+	public function update($update_info, $where){
+		$this->_get_db(self::DB_TYPE_MASTER)->update($this->_table, $update_info, $where);
+		return $this->_affected_rows();
+	}
 
-//		f_echo("start db last_q time : " . self::$last_query_time . ";");
-		if(empty(self::$last_query_time)){
-//			f_echo("set last_q time");
-			$this->load->database();
-			self::$last_query_time = time();
-		}
-		$t = time();
-		$diff = $t - self::$last_query_time;
-//		f_echo("db last_q time : " . self::$last_query_time . "; now time {$t}; diff is {$diff}");
-		if(!empty(self::$last_query_time) && (time() - self::$last_query_time) > 3){
-//			f_echo('db need to reconnect');
-			if(!$this->db->reconnect()){
-//				f_echo('db reconnect');
+	/**
+	 * 获取db
+	 * @param string $db_type
+	 * @return mixed
+	 */
+	protected function _get_db($db_type = self::DB_TYPE_SLAVE){
+		if($db_type == self::DB_TYPE_MASTER){
+			if(empty(self::$master_last_query_time)){
+				self::$master_db = $this->load->database('master', true);
+				self::$master_last_query_time = time();
+			}else if((time() - self::$master_last_query_time) > 3){
+				if(!self::$master_db->reconnect()){
+					self::$master_db =$this->load->database('master', true);
+					self::$master_last_query_time = time();
+				}
+			}
+			error_log(self::$master_db->hostname, 3, '/tmp/test.log');
+		}else{
+			if(empty(self::$slave_last_query_time)){
 				$this->load->database();
-				self::$last_query_time = time();
+				self::$slave_last_query_time = time();
+			}else if((time() - self::$slave_last_query_time) > 3){
+				if(!$this->db->reconnect()){
+					$this->load->database();
+					self::$slave_last_query_time = time();
+				}
 			}
 		}
 
-		return $this->db;
+		return $db_type == self::DB_TYPE_MASTER? self::$master_db:$this->db;
 	}
 
 	protected function _insert_ignore_batch($table, $insert_data){
@@ -53,20 +79,20 @@ class MY_Model extends CI_Model {
 		foreach($insert_data as $item){
 			$v = array();
 			foreach($item as $tmp){
-				array_push($v, $this->_get_db()->escape($tmp));
+				array_push($v, $this->_get_db(self::DB_TYPE_MASTER)->escape($tmp));
 			}
 			$values_sql_item_array[] = '(' . implode(',', $v) . ')';
 		}
 		$value_sql = implode(',', $values_sql_item_array);
 		$sql = "insert IGNORE INTO {$table} {$column_sql} VALUES $value_sql ;";
 
-		$this->_get_db()->query($sql);
+		$this->_get_db(self::DB_TYPE_MASTER)->query($sql);
 
-		return $this->_get_db()->affected_rows();
+		return $this->_affected_rows();
 	}
 
 	protected function _c_query($sql){
-		$query = $this->_get_db()->query($sql);
+		$query = $this->_get_db(self::DB_TYPE_SLAVE)->query($sql);
 		return $query->result_array();
 	}
 
@@ -76,13 +102,43 @@ class MY_Model extends CI_Model {
 	}
 
 	protected function _insert_batch($datas){
-		$this->_get_db()->insert_batch($this->_table, $datas);
+		$this->_get_db(self::DB_TYPE_MASTER)->insert_batch($this->_table, $datas);
 		return $this->_affected_rows();
+	}
+
+	/**
+	 * 执行写语句
+	 * @param $sql
+	 * @return mixed
+	 */
+	protected function _exe_write_sql($sql){
+		$x = var_export($this->_get_db(self::DB_TYPE_MASTER), true);
+		echo $x;exit;
+		$this->_get_db(self::DB_TYPE_MASTER)->query($sql);
+		return $this->_affected_rows();
+	}
+
+	/**
+	 * 转义字符串
+	 * @param $str
+	 * @return mixed
+	 */
+	protected function _escape_str($str){
+		return $this->_get_db(self::DB_TYPE_SLAVE)->escape_str($str);
+	}
+
+	/**
+	 * 转义字符串
+	 * @param $str
+	 * @return mixed
+	 */
+	protected function _escape($str){
+		return $this->_get_db(self::DB_TYPE_SLAVE)->escape($str);
 	}
 
 	/**************************************private methods****************************************************************************/
 
 	private function _affected_rows(){
-		return $this->_get_db()->affected_rows();
+		return $this->_get_db(self::DB_TYPE_MASTER)->affected_rows();
 	}
 }

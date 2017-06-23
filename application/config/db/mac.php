@@ -26,3 +26,5 @@ $db['default'] = array(
 	'save_queries' => TRUE,
 );
 
+$db['master'] = $db['default'];
+

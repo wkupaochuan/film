@@ -11,7 +11,7 @@ class Lol_film_model extends MY_Model {
 			return;
 		}
 
-		$sql = "select * from " . $this->_table . " where `url`=" . $this->_get_db()->escape($url);
+		$sql = "select * from " . $this->_table . " where `url`=" . $this->_escape($url);
 		return $this->_c_query_unique($sql);
 	}
 
@@ -19,7 +19,7 @@ class Lol_film_model extends MY_Model {
 		$where = array(
 			'id' => $id
 		);
-		$this->_get_db()->update($this->_table, $data, $where);
+		$this->update($data, $where);
 	}
 
 	public function get_film_by_range($offset, $limit){
@@ -35,6 +35,6 @@ class Lol_film_model extends MY_Model {
 	public function incr_un_match_times($lol_film_id){
 		$lol_film_id = intval($lol_film_id);
 		$sql = "update lol_film SET un_match_times = un_match_times + 1 where id = {$lol_film_id}";
-		return $this->_get_db()->query($sql);
+		return $this->_c_query($sql);
 	}
 }

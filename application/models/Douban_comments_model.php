@@ -7,7 +7,7 @@ class Douban_comments_model extends MY_Model {
 	}
 
 	public function insert_batch($data){
-		$this->_get_db()->insert_batch($this->_table, $data);
+		$this->_insert_batch($data);
 	}
 
 	public function query_by_douban_id_and_people($douban_id, $people_ids){
@@ -17,7 +17,7 @@ class Douban_comments_model extends MY_Model {
 		}
 		$arr = array();
 		foreach($people_ids as $tmp){
-			$arr[] = "'" . $this->_get_db()->escape_str($tmp) . "'";
+			$arr[] = "'" . $this->_escape_str($tmp) . "'";
 		}
 		$p = implode(',', $arr);
 

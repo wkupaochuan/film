@@ -26,8 +26,7 @@ class Film_recom_model extends MY_Model {
 			) limit {$offset}, {$limit};
 SQL;
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	/**
@@ -37,10 +36,10 @@ SQL;
 	function incr_invalid_times($recom_douban_id ){
 		$recom_douban_id = intval($recom_douban_id);
 		$sql = "UPDATE film_recom SET invalid_times = invalid_times + 1 where recom_douban_id = {$recom_douban_id}";
-		$this->_get_db()->query($sql);
+		return $this->_exe_write_sql($sql);
 	}
 	function update_by_douban_id($douban_id, $film_id){
 		$sql = "UPDATE film_recom SET film_id ={$film_id} where douban_id ={$douban_id} ";
-		return $this->_get_db()->query($sql);
+		return $this->_exe_write_sql($sql);
 	}
 }

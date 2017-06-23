@@ -6,11 +6,6 @@ class Film_pic_model extends MY_Model {
 		parent::__construct();
 	}
 
-	function insert($pic)
-	{
-		$this->_get_db()->insert('film_pic', $pic);
-	}
-
 	/**
 	 * @param $film_id
 	 */
@@ -23,6 +18,6 @@ class Film_pic_model extends MY_Model {
 
 	function update_by_douban_id($douban_id, $film_id){
 		$sql = "UPDATE film_pic SET film_id ={$film_id} where douban_id ={$douban_id} ";
-		return $this->_get_db()->query($sql);
+		return $this->_exe_write_sql($sql);
 	}
 }

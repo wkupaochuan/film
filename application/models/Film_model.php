@@ -13,15 +13,14 @@ class Film_model extends MY_Model {
 	 */
 	public function query_by_name_for_user_search($search_words)
 	{
-		$search_words = $this->_get_db()->escape_str($search_words);
+		$search_words = $this->_escape_str($search_words);
 		$sql = <<<SQL
 			select * from film WHERE id IN (
 				select DISTINCT(film_id) from film_names where `name` like '%{$search_words}%'
 			) AND download_able = 1 limit 0,20;
 SQL;
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	function get_by_douban_ids($douban_ids)
@@ -32,8 +31,8 @@ SQL;
 		foreach($douban_ids as &$id) {
 			$id = intval($id);
 		}
-		$query = $this->_get_db()->query("select * from film where douban_id in ( " . implode(',', $douban_ids) . ")");
-		return $query->result_array();
+		$sql = "select * from film where douban_id in ( " . implode(',', $douban_ids) . ")";
+		return $this->_c_query($sql);
 	}
 
 	function get_by_ids($film_ids)
@@ -51,18 +50,14 @@ SQL;
 	function get_by_douban_id($douban_id)
 	{
 		$douban_id = intval($douban_id);
-		$query = $this->_get_db()->query("select * from film where douban_id = " . $douban_id);
-		$result = $query->result_array();
-		return empty($result)? array():$result[0];
+		return $this->_c_query_unique("select * from film where douban_id = " . $douban_id);
 	}
 
 	function get_detail_by_id($id)
 	{
 		$id = intval($id);
 		$sql = "select * from `film` where `id` = " . $id;
-		$query = $this->_get_db()->query($sql);
-		$result = $query->result_array();
-		return empty($result)? array():$result[0];
+		return $this->_c_query_unique($sql);
 	}
 
 	public function get($offset, $limit, $attrs = array())
@@ -74,15 +69,13 @@ SQL;
             $sql = "select {$attr_sql} from film limit {$offset},{$limit}";
         }
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	public function get_download_able_films($offset, $limit)
 	{
 		$sql = "select id, up_time from film where download_able = 1 limit {$offset},{$limit}";
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	public function update_loldytt_info($id, $info)
@@ -96,36 +89,32 @@ SQL;
 			'id' => $id
 		);
 
-		$this->_get_db()->update($this->_table, $update_info, $where);
+		return $this->update($update_info, $where);
 	}
 
 	public function query_by_name_and_actors($name, $actors)
 	{
-		$search_words = $this->_get_db()->escape_str($name);
-		$actors = $this->_get_db()->escape_str($actors);
-		$query = $this->_get_db()->query("select * from film where `ch_name` like '%{$search_words}%' and actors like '%{$actors}%' ");
-		return $query->result_array();
+		$search_words = $this->_escape_str($name);
+		$actors = $this->_escape_str($actors);
+		return $this->_c_query("select * from film where `ch_name` like '%{$search_words}%' and actors like '%{$actors}%' ");
 	}
 
 	public function query_by_actors_and_id($film_ids, $actor) {
-		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and actors like '%" . $this->_get_db()->escape_str($actor) . "%' ";
+		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and actors like '%" . $this->_escape_str($actor) . "%' ";
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	public function query_by_director_and_id($film_ids, $director) {
-		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and  director like '" . $this->_get_db()->escape_str($director) . "%';";
+		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and  director like '" . $this->_escape_str($director) . "%';";
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	public function query_by_year_and_id($film_ids, $year) {
 		$sql = "select * from film where id in (". implode(',', $film_ids) . ") and  `year`=" . intval($year);
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	public function update_by_douban_id($douban_id, $update_info){
@@ -135,8 +124,8 @@ SQL;
 		$where = array(
 			'douban_id' => intval($douban_id)
 		);
-		$this->_get_db()->update($this->_table, $update_info, $where);
-		return $this->_get_db()->affected_rows();
+
+		return $this->update($update_info, $where);
 	}
 
 	public function update_by_id($id, $update_info){
@@ -146,8 +135,8 @@ SQL;
 		$where = array(
 			'id' => intval($id)
 		);
-		$this->_get_db()->update($this->_table, $update_info, $where);
-		return $this->_get_db()->affected_rows();
+
+		return $this->update($update_info, $where);
 	}
 
 	public function get_recom_films($film_id){
@@ -158,12 +147,11 @@ SQL;
 			);
 SQL;
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 
 	public function query_by_lol_url($url){
-		$url = $this->_get_db()->escape($url);
+		$url = $this->_escape($url);
 		$sql = "select * from {$this->_table} where `lol_url` = {$url}";
 		return $this->_c_query_unique($sql);
 	}

@@ -13,14 +13,14 @@ class Film_name_model extends MY_Model {
 	}
 
 	function search_by_name($name) {
-		$sql = "select * from film_names where `name` like '%" . $this->_get_db()->escape_str($name) ."%';";
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		$sql = "select * from film_names where `name` like '%" . $this->_escape_str($name) ."%';";
+
+		return $this->_c_query($sql);
 	}
 
 	function update_by_douban_id($douban_id, $film_id){
 		$sql = "UPDATE film_names SET film_id ={$film_id} where douban_id ={$douban_id} ";
-		return $this->_get_db()->query($sql);
+		return $this->_exe_write_sql($sql);
 	}
 
 	function search_by_names($names) {
@@ -28,18 +28,17 @@ class Film_name_model extends MY_Model {
 
 		$like_arr = array();
 //		foreach($names as $name){
-//			$like_arr[] = " `name` like '%" . $this->_get_db()->escape_str($name) ."%'";
+//			$like_arr[] = " `name` like '%" . $this->_escape_str($name) ."%'";
 //		}
 
 		foreach($names as $name){
-			$like_arr[] = " `name` = '" . $this->_get_db()->escape_str($name) ."'";
+			$like_arr[] = " `name` = '" . $this->_escape_str($name) ."'";
 		}
 
 		$like = " where " . implode(' or ', $like_arr);
 		$sql .= $like;
-//		echo $sql;exit;
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+
+		return $this->_c_query($sql);
 	}
 
     function get_by_film_id($film_id){
@@ -54,7 +53,7 @@ class Film_name_model extends MY_Model {
         }
         $in_sql = implode(',' , $ids);
         $sql = "delete from {$this->_table} where id in ({$in_sql})";
-        $this->_get_db()->query($sql);
+        $this->_exe_write_sql($sql);
     }
 
 	public function f1($offset, $limit){

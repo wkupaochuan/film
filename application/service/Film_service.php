@@ -102,8 +102,15 @@ class Film_service extends MY_Service{
 		}
 		$film_detail['bt'] = $sorted_bts;
 
+		// 更新访问日志
+		if(!from_robot()){
+			$this->load->model('Film_ac_log_model');
+			$this->Film_ac_log_model->ac($film_id, time(), 1);
+		}
+
 		return $film_detail;
 	}
 
     /**************************************private methods****************************************************************************/
+
 }

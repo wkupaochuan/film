@@ -19,9 +19,9 @@ class Lol_recom_model extends MY_Model {
 		if(empty($recom_url)){
 			return;
 		}
-		$recom_url = $this->_get_db()->escape($recom_url);
+		$recom_url = $this->_escape($recom_url);
 		$sql = "UPDATE {$this->_table} SET invalid_times = invalid_times + 1 where recom_url = {$recom_url}";
-		$this->_get_db()->query($sql);
+		$this->_exe_write_sql($sql);
 	}
 
 	/**
@@ -39,7 +39,6 @@ class Lol_recom_model extends MY_Model {
 			) limit {$offset}, {$limit};
 SQL;
 
-		$query = $this->_get_db()->query($sql);
-		return $query->result_array();
+		return $this->_c_query($sql);
 	}
 }

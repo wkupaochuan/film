@@ -36,7 +36,7 @@ class Film_recom_service extends MY_Service{
 	 */
 	public function up_un_douban($douban_id){
 		$this->load->model('Un_douban_model');
-		$this->Un_douban_model->update($douban_id);
+		$this->Un_douban_model->mark($douban_id);
 	}
 
     /**************************************private methods****************************************************************************/

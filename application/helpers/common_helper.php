@@ -117,3 +117,16 @@ function is_mobile()
 	$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
 	return strpos($agent, 'iphone') ||  strpos($agent, 'android') || strpos($agent, 'ipad');
 }
+
+/**
+ * 判定请求是否来自爬虫
+ * @return bool
+ */
+function from_robot()
+{
+	if(!isset($_SERVER['HTTP_USER_AGENT'])){
+		return false;
+	}
+	$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
+	return strpos($agent, 'Spider') ||  strpos($agent, 'Googlebot') || strpos($agent, 'MJ12bot') || strpos($agent, 'Baiduspider');
+}

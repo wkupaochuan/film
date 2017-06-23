@@ -16,8 +16,8 @@ class Un_douban_model extends MY_Model {
 		return $this->_c_query($sql);
 	}
 
-	public function update($douban_id){
+	public function mark($douban_id){
 		$sql = 'UPDATE un_douban SET tag = 2 where douban_id = ' . intval($douban_id);
-		$this->_get_db()->query($sql);
+		$this->_exe_write_sql($sql);
 	}
 }
