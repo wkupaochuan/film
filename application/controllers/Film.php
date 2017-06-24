@@ -18,6 +18,9 @@ class Film extends MY_Controller {
 			$tpl = 'home.tpl';
 			$this->load->service('Film_service');
             $hot_films = $this->Film_service->get_last_week_hot_films();
+            if(!empty($hot_films)){
+                $hot_films = array_slice($hot_films, 0, count($hot_films) - count($hot_films)%6);
+            }
 			$search_result = $this->Film_service->get_up_films(strtotime(date('Y-m-d', time() - 86400)));
 		}
 

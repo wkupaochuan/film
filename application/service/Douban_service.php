@@ -184,10 +184,6 @@ class Douban_service extends MY_Service{
 	 * @param int $start
 	 */
     public function overwrite_names($start = 0){
-	    $this->load->service('parser/Parser_douban');
-	    $this->Parser_douban->test();
-	    exit;
-
         $fail = $success = $nil = $done = 0;
         $limit = 50;
 	    $page = $start/$limit;
@@ -537,7 +533,7 @@ class Douban_service extends MY_Service{
 	 * @return mixed|string
 	 */
 	private function _request_douban($url, $post_data = array()){
-		sleep(rand(1,7));
+		sleep(rand(1,3));
 
 		$header = array(
 			'Accept' => '*/*',

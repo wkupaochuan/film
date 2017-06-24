@@ -35,7 +35,7 @@ SQL;
 		return $this->_c_query($sql);
 	}
 
-	function get_by_ids($film_ids, $attrs = array())
+	function get_by_ids($film_ids, $attrs = array(), $where = array())
 	{
 		if(empty($film_ids)) {
 			return array();
@@ -49,6 +49,17 @@ SQL;
         }else{
             $attr_sql = implode(',', $attrs);
             $sql = "select {$attr_sql} from film where id in ( " . implode(',', $film_ids) . ")";
+        }
+
+        if(!empty($where)){
+            $where_arr = array();
+            foreach($where as $key => $value){
+                $where_arr[] = "`{$key}` = " . $this->_escape($value);
+            }
+
+            if(!empty($where_arr)){
+                $sql .= ' and  ' . implode(' and ', $where_arr);
+            }
         }
 
 

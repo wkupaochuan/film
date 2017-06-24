@@ -53,7 +53,6 @@ class MY_Model extends CI_Model {
 					self::$master_last_query_time = time();
 				}
 			}
-			error_log(self::$master_db->hostname, 3, '/tmp/test.log');
 		}else{
 			if(empty(self::$slave_last_query_time)){
 				$this->load->database();
