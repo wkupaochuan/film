@@ -300,9 +300,10 @@ class Douban_service extends MY_Service{
 
 		$start_time = time();
 		$this->load->service('parser/Parser_douban');
-		while($page < 10000){
+		while($page < 10000000){
 			$films = $this->Film_model->get($page++ * $limit, $limit, array('douban_id'));
 			if(empty($films)){
+                f_echo('no films any more');
 				break;
 			}
 
