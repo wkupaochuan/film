@@ -130,6 +130,18 @@ class Film_service extends MY_Service{
         return $hot_films;
     }
 
+	public function get_hot_and_un_match_films(){
+		$films = $this->Film_ac_log_model->get_hot_and_un_match_films();
+
+		foreach($films as &$film){
+			$film['other_names'] = !empty($film['other_names'])? implode('/',json_decode($film['other_names'])):'';
+		}
+
+
+
+		return $films;
+	}
+
     /**************************************private methods****************************************************************************/
 
 }

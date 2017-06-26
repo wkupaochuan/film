@@ -10,15 +10,11 @@ class MY_Controller extends CI_Controller {
 	}
 
 	public function display($html) {
+		$this->cismarty->assign('SEND_TONGJI', $this->_send_tongji());
 		$this->cismarty->assign('PIC_HOST', $this->config->item('PIC_HOST'));
 		$this->cismarty->assign('ENV', ENVIRONMENT);
 		$this->cismarty->assign('content_html',$html);
 		$this->cismarty->display('base/base.tpl');
-	}
-
-	protected function _from_spider(){
-		$ua = !empty($_SERVER['HTTP_USER_AGENT'])? strtolower($_SERVER['HTTP_USER_AGENT']):'';
-		return strpos($ua, 'spider') !== false;
 	}
 
 	protected function _c_echo($str)  {
@@ -38,5 +34,17 @@ class MY_Controller extends CI_Controller {
 			$genre_dic[$tmp['desc']] = $tmp;
 		}
 		$this->config->set_item('film_genre_dic', $genre_dic);
+	}
+
+	private function _send_tongji(){
+		$send = 0;
+		if(ENVIRONMENT == 'production'){
+			$uri = strtolower($_SERVER['REQUEST_URI']);
+			if(strpos($uri, '&debug=1') === false && strpos($uri, '/cms/') === false){
+				$send = 1;
+			}
+		}
+
+		return $send;
 	}
 }

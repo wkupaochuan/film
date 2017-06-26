@@ -33,7 +33,7 @@
     <link href="../../../resources/css/film.css" rel="stylesheet">
 
     <!--百度统计-->
-    {if $ENV eq 'production'}
+    {if $SEND_TONGJI eq 1}
     {literal}
         <script language="JavaScript" type="text/javascript">
             var _hmt = _hmt || [];
@@ -45,6 +45,7 @@
             })();
         </script>
 
+        <!--百度推送-->
         <script>
             (function(){
                 var bp = document.createElement('script');
@@ -60,6 +61,7 @@
             })();
         </script>
 
+        <!--谷歌统计-->
         <script>
             (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
                         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

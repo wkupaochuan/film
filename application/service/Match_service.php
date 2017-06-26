@@ -134,6 +134,8 @@ class Match_service extends MY_Service{
 			return false;
 		}
 
+		f_echo('up success');
+
 		return true;
 	}
 

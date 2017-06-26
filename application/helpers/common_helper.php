@@ -16,10 +16,6 @@ function f_curl($url, $post_data = array(), $cookie_jar = '', $header = array(),
 	$proxy = array();
 	$proxy_array = array(
 		array(
-			'ip' => '111.13.7.119',
-			'port' => '8080',
-		),
-		array(
 			'ip' => '111.13.2.131',
 			'port' => '80',
 		),

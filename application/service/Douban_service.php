@@ -293,14 +293,14 @@ class Douban_service extends MY_Service{
 		return $douban_ids;
 	}
 
-	public function tmp_store_detail_htmls($t = 0){
-		$page = 0 ;
+	public function tmp_store_detail_htmls($start = 0){
 		$fail = $success = $ex = 0;
 		$limit = 10;
+		$page = $start/$limit;
 
 		$start_time = time();
 		$this->load->service('parser/Parser_douban');
-		while($page < 10000000){
+		while($page < 100000000){
 			$films = $this->Film_model->get($page++ * $limit, $limit, array('douban_id'));
 			if(empty($films)){
                 f_echo('no films any more');

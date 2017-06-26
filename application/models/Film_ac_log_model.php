@@ -48,5 +48,16 @@ SQL;
 		return $this->_c_query($sql);
 	}
 
+	public function get_hot_and_un_match_films(){
+		$sql = <<<SQL
+			select id, douban_id, l_post_cover, `year`, director, actors , ac.ac_times, film.ch_name, film.or_name, film.other_names
+			from film LEFT JOIN (
+				select film_id, sum(ac_times) as ac_times from film_ac_log GROUP BY film_id
+			) as ac on film.id = ac.film_id
+			where film.download_able != 1 and ac.film_id is not null
+			order by ac.ac_times desc
+SQL;
+		return $this->_c_query($sql);
+	}
 
 }
