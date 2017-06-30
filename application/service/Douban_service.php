@@ -556,6 +556,11 @@ class Douban_service extends MY_Service{
      * @return array
      */
     private function _craw_douban_detail($douban_id, $attrs = array()) {
+
+	    //
+	    $this->load->service('extracter/Extracter_douban');
+	    return $this->Extracter_douban->process($douban_id, $attrs);
+
         $ret = array();
 
         $html = $this->_get_douban_detail_html($douban_id);

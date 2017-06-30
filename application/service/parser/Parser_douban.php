@@ -1,14 +1,24 @@
 <?php
-class Parser_douban extends MY_Service{
+require_once(APPPATH . 'service/parser/Parser_base.php');
 
-	/**
-	 * @param $douban_id
-	 * @param $html
-	 */
-	public function process($douban_id, $html){
+class Parser_douban extends Parser_base{
+
+	public function __construct(){
+		parent::__construct();
+		$this->load->service('crawler/Crawler_douban');
+	}
+
+	public function process($douban_id){
+		$html = $this->Crawler_douban->process($douban_id);
+		if(empty($html)){
+			return false;
+		}
+
 		$dom_els = $this->_parse_dom_els($html);
 		$des_html = $this->_pack_des_html($dom_els['head'], $dom_els['body']);
-		file_put_contents($this->_cal_path($douban_id), $des_html);
+		file_put_contents($this->cal_path($douban_id), $des_html);
+
+		return true;
 	}
 
 	/**
@@ -16,7 +26,7 @@ class Parser_douban extends MY_Service{
 	 * @param $douban_id
 	 * @return string
 	 */
-	public function _cal_path($douban_id){
+	public function cal_path($douban_id){
 		$md5 = md5($douban_id);
 		$dir = APPPATH . 'data/douban/' . implode('/', array($md5[29], $md5[30], $md5[31])) . '/' ;
 		if(!is_dir($dir)){
@@ -26,69 +36,17 @@ class Parser_douban extends MY_Service{
 		return $path;
 	}
 
+	/**
+	 * 判断是否已经抓取过
+	 * @param $douban_id
+	 * @return bool
+	 */
+	public function exist($douban_id){
+		$path = $this->cal_path($douban_id);
+		return is_file($path);
+	}
+
 	/**************************************private methods****************************************************************************/
-
-	/**
-	 * @param DOMDocument $doc
-	 * @param $class_name
-	 * @param $tag
-	 * @return DOMElement
-	 */
-	private function _get_element_by_class(DOMDocument $doc, $tag, $class_name){
-		$node_arr = array();
-		$domnode_list = $doc->getElementsByTagName($tag);
-		if(!empty($domnode_list)){
-			for($i = 0; $i < $domnode_list->length; ++$i){
-				$node_class = $domnode_list->item($i)->getAttribute('class');
-				if(!empty($node_class) && $node_class == $class_name){
-					$node_arr[] = $domnode_list->item($i);
-				}
-			}
-		}
-
-		return count($node_arr) == 1? $node_arr[0]:null;
-	}
-
-	/**
-	 * @param DOMDocument $doc
-	 * @param $tag_name
-	 * @return DOMElement|null
-	 */
-	private function _get_unique_element_by_tag(DOMDocument $doc, $tag_name){
-		$node_list = $doc->getElementsByTagName($tag_name);
-		return $node_list->length == 1? $node_list->item(0):null;
-	}
-
-	/**
-	 * 组装解析完的html
-	 * @param $head_dom_el_arr
-	 * @param $body_el_arr
-	 * @return string
-	 */
-	private function _pack_des_html($head_dom_el_arr, $body_el_arr){
-		$html = <<<HTML
-	<!DOCTYPE html>
-	<html lang="zh-cmn-Hans" class="ua-windows ua-webkit">
-    <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-HTML;
-
-		foreach($head_dom_el_arr as $tmp_dom_el){
-			if(!empty($tmp_dom_el)){
-				$html .= PHP_EOL . $tmp_dom_el->C14N();
-			}
-		}
-		$html .= PHP_EOL . '</head>' . PHP_EOL . '<body>';
-
-		foreach($body_el_arr as $tmp_dom_el){
-			if(!empty($tmp_dom_el)){
-				$html .= PHP_EOL . $tmp_dom_el->C14N();
-			}
-		}
-		$html .= PHP_EOL . '</body>' . PHP_EOL . '</html>';
-
-		return $html;
-	}
 
 	/**
 	 * 解析
@@ -132,6 +90,5 @@ HTML;
 			$celebrities_div_node, $pics_div_node,  $award_div_node,  $recom_div_node )
 		);
 	}
-
 
 }
