@@ -49,6 +49,8 @@ class Extracter_douban extends Extracter_base{
 					if(!empty($h1_node) && $h1_node->length == 1){
 						$span_nodes = get_child_nodes_by_tag($h1_node->item(0), 'span');
 						if(count($span_nodes) === 2){
+							$ret['year'] = $span_nodes[1]->nodeValue;
+
 							$compact_name = trim($span_nodes[0]->nodeValue);
 							if(strlen($ch_name) !== strlen($compact_name)){
 								$ret['or_name'] = trim(substr($compact_name, strlen($ch_name) + 1));
@@ -66,11 +68,11 @@ class Extracter_douban extends Extracter_base{
 		// 海报
 		if(empty($attrs) || in_array('post_cover', $attrs)){
 			$main_pic_div_node = $doc->getElementById('mainpic');
-			!empty($main_pic_div_node) && $main_pic_div_node->getElementsByTagName('img');
+			!empty($main_pic_div_node) && $main_pic_div_node = $main_pic_div_node->getElementsByTagName('img');
 			if(!empty($main_pic_div_node) && $main_pic_div_node->length == 1){
 				$post_cover_url = trim($main_pic_div_node->item(0)->getAttribute('src'));
 				if(!empty($post_cover_url)){
-					$ret['post_cover'] = $post_cover_url;
+					$ret['post_cover'] = trim($post_cover_url);
 				}
 			}
 
@@ -78,6 +80,8 @@ class Extracter_douban extends Extracter_base{
 				f_log_error('no post_cover ' . $douban_id);
 			}
 		}
+
+		$info_div_node = $doc->getElementById('info');
 
 		// 年份
 		if(empty($attrs) || in_array('year', $attrs)){
