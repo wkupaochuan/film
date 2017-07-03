@@ -107,7 +107,7 @@ class Douban_service extends MY_Service{
         $db_film_detail = $this->Film_model->get_by_douban_id($douban_id);
 
         // 爬取
-        $douban_film_detail = $this->_craw_douban_detail($douban_id);
+        $douban_film_detail = $this->_craw_douban_detail($douban_id);print_r($douban_film_detail);exit;
         if(empty($douban_film_detail)){
             f_log_error('craw get nothing from ' . $douban_id);
             return false;

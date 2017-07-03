@@ -165,10 +165,9 @@ class Extracter_douban extends Extracter_base{
 
 		// 其他名称
 		if(empty($attrs) || in_array('other_names', $attrs)){
-			$pattern = '#<span class="pl">又名:</span>([\s\S]*)<br/>#U';
+			$pattern = '#又名:</span>([\s\S]*)<br>#U';
 			$matches = array();
 			preg_match($pattern, $info_html, $matches);
-
 			!empty($matches[1]) && $names = explode('/', $matches[1]);
 			if(!empty($names)){
 				foreach($names as $tmp_name){
@@ -309,7 +308,7 @@ class Extracter_douban extends Extracter_base{
 			$ret['link'] = "https://movie.douban.com/subject/{$douban_id}/";
 			$ret['id'] = $douban_id;
 		}
-
+		
 		return $ret;
 	}
 

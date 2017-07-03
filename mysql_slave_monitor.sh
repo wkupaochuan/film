@@ -8,7 +8,7 @@ else
         echo film `date "+%Y-%m-%d %H:%M:%S"` "no"
 fi
 
-ali_slave_is=($(mysql -S /data/mysql/3307/mysql.sock -uroot -proot -e "use skin;show slave status\G;" | grep  Slave_.*_Running | awk '{print $2}'))
+ali_slave_is=($(/usr/local/mysql/bin/mysql -S /data/mysql/3307/mysql.sock -uroot -proot -e "use skin;show slave status\G;" | grep  Slave_.*_Running | awk '{print $2}'))
 
 if [ "${ali_slave_is[0]}" == "Yes" -a  "${ali_slave_is[1]}" == "Yes" ]
 then
