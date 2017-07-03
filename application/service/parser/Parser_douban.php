@@ -43,7 +43,7 @@ class Parser_douban extends Parser_base{
 	 */
 	public function exist($douban_id){
 		$path = $this->cal_path($douban_id);
-		return is_file($path);
+		return file_exists($path);
 	}
 
 	/**************************************private methods****************************************************************************/

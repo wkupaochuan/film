@@ -20,3 +20,24 @@ function get_child_nodes_by_tag(DOMNode $node, $tag){
 
 	return $node_arr;
 }
+
+/**
+ * @param DOMDocument $doc
+ * @param $tag
+ * @param $class_name
+ * @return DOMElement
+ */
+function get_unique_element_by_class(DOMDocument $doc, $tag, $class_name){
+	$node_arr = array();
+	$domnode_list = $doc->getElementsByTagName($tag);
+	if(!empty($domnode_list)){
+		for($i = 0; $i < $domnode_list->length; ++$i){
+			$node_class = $domnode_list->item($i)->getAttribute('class');
+			if(!empty($node_class) && $node_class == $class_name){
+				$node_arr[] = $domnode_list->item($i);
+			}
+		}
+	}
+
+	return count($node_arr) == 1? $node_arr[0]:null;
+}
