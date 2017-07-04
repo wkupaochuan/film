@@ -35,10 +35,6 @@ class Film_pic_service extends MY_Service{
 
 		$this->load->model('Film_model');
 		$or_film_detail = $this->Film_model->get_detail_by_id($film_id);
-		// 已经存在的不再更新 todo
-		if(!empty($or_film_detail['b_post_cover']) && $or_film_detail['b_post_cover'] != 'movie_default_large'){
-			return true;
-		}
 
 		$down_pic_url = str_replace('https', 'http', $douban_post_cover_link);
 		$down_pic_file_name = substr($douban_post_cover_link, strrpos($douban_post_cover_link, '/') + 1);
@@ -61,21 +57,20 @@ class Film_pic_service extends MY_Service{
 		if(!empty($b_down_pic_url)){
 			$pending_down_content = array(
 				array(
-					'type' => 1,
+					'key' => 'b_post_cover',
 					'url' => $b_down_pic_url,
 					'file_name' => 'pcl_' . $down_pic_file_name,
 				),
 				array(
-					'type' => 2,
+					'key' => 'l_post_cover',
 					'url' => $l_down_pic_url,
 					'file_name' => 'pci_' . $down_pic_file_name,
 				)
 			);
 
 			foreach($pending_down_content as $tmp){
-				$down_pic_url = $tmp['url'];
-				if($this->_download_and_upload($down_pic_url, $tmp['file_name'])){
-					$update_info = $tmp['type'] == 1?  array('b_post_cover' => $tmp['file_name'],):array('l_post_cover' => $tmp['file_name'],);
+				if($or_film_detail[$tmp['key']] != $tmp['file_name'] && $this->_download_and_upload($tmp['url'], $tmp['file_name'])){
+					$update_info = array($tmp['key'] => $tmp['file_name']);
 					$this->Film_model->update_by_id($film_id, $update_info);
 				}
 			}
