@@ -10,6 +10,18 @@
 </div>
 
 <div id="content">
+	{if $data.film_detail.download_able eq 2}
+		<form class="form-inline">
+			<div class="form-group">
+				<label for="exampleInputName2">这部电影还没有资源, 不妨留下email, 小编搞到资源后, 会给您发邮件的</label>
+				<input type="text" class="form-control" id="user_mail" placeholder="a1qifa@126.com">
+				<input type="hidden" id="film_id" value="{$data.film_detail.id}">
+			</div>
+			<button type="button" id="user_rs_btn" class="btn btn-default">提交</button>
+			<label id="user_rs_tip"></label>
+		</form>
+	{/if}
+
 	<h1>
 		<span >{$data.film_detail.ch_name} {$data.film_detail.or_name} ({$data.film_detail.year}) </span>
 	</h1>
@@ -176,3 +188,22 @@
 
 	</div>
 </div>
+
+{literal}
+<script type="text/javascript">
+	$("#user_rs_btn").click(function (e) {
+		$.ajax({
+			url:"/film/user_rs",
+			dataType:"TEXT",
+			type:"POST",
+			data:{
+				mail: $("#user_mail").val(),
+				film_id: $("#film_id").val()
+			},
+			success: function(data){
+				$("#user_rs_tip").html("成功");
+			}
+		})
+	})
+</script>
+{/literal}

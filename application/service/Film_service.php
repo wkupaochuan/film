@@ -155,6 +155,15 @@ class Film_service extends MY_Service{
 		return $films;
 	}
 
+	/**
+	 * 用户订阅
+	 * @param $data
+	 */
+	public function user_rs($data){
+		$this->load->model('User_rs_model');
+		return $this->User_rs_model->insert($data);
+	}
+
     /**************************************private methods****************************************************************************/
 
 }

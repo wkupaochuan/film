@@ -17,13 +17,13 @@ class S80 extends MY_Controller {
 		$this->load->model('Film_model');
 		$db_film = $this->Film_model->get_by_douban_id($douban_id);
 		if(!empty($db_film) && $db_film['info_from'] == 1){
-			$this->_log_error('douban film exist already');
+			f_log_error('douban film exist already');
 			return;
 		}
 
 		$douban_film_detail = $this->_craw_film_detail($url);
 		if(empty($douban_film_detail)){
-			$this->_log_error('get nothing from url ' . $url);
+			f_log_error('get nothing from url ' . $url);
 		}
 
 		// insert film
@@ -105,17 +105,17 @@ class S80 extends MY_Controller {
 						$update_info = $tmp['type'] == 1?  array('b_post_cover' => $tmp['file_name'],):array('l_post_cover' => $tmp['file_name'],);
 						$this->Film_model->update_by_douban_id($douban_id, $update_info);
 					}else{
-						$this->_log_error('upload fail:' . $douban_id);
+						f_log_error('upload fail:' . $douban_id);
 					}
 					@unlink($down_pic_file_full_path);
 				}else{
-					$this->_log_error('download fail:' . $douban_id . ':' . $down_pic_url);
+					f_log_error('download fail:' . $douban_id . ':' . $down_pic_url);
 				}
 			}
 
 			return true;
 		}else{
-			$this->_log_error('ilegal url:' . $douban_id . ';' . $douban_post_cover_link);
+			f_log_error('ilegal url:' . $douban_id . ';' . $douban_post_cover_link);
 			return false;
 		}
 	}
@@ -131,7 +131,7 @@ class S80 extends MY_Controller {
 		$html = $this->_request_80s($url);
 
 		if(strlen($html) < 300){
-			$this->_log_error('get nothing from url ' . $url);
+			f_log_error('get nothing from url ' . $url);
 			return $film_detail;
 		}
 
@@ -142,7 +142,7 @@ class S80 extends MY_Controller {
 		if(!empty($matches) && !empty($matches[1])){
 			$film_detail['ch_name'] = $matches[1];
 		}else{
-			$this->_log_error('no ch_name on url ' . $url);
+			f_log_error('no ch_name on url ' . $url);
 			return $film_detail;
 		}
 

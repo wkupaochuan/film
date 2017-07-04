@@ -8,7 +8,6 @@ class MY_Model extends CI_Model {
 	private static $master_last_query_time = 0;
 	private static $master_db = null;
 
-
 	public function __construct() {
 		parent::__construct();
 	}

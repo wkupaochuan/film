@@ -85,4 +85,17 @@ class Film extends MY_Controller {
 
 		$this->display('home_for_spider.tpl');
 	}
+
+	/**
+	 * 用户订阅
+	 */
+	public function user_rs(){
+		$user_mail = $this->_param('mail');
+		$film_id = $this->_param('film_id');
+
+		$this->Film_service->user_rs(array(
+			'mail' => $user_mail,
+			'film_id' => $film_id
+		));
+	}
 }

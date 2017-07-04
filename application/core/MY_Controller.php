@@ -17,14 +17,11 @@ class MY_Controller extends CI_Controller {
 		$this->cismarty->display('base/base.tpl');
 	}
 
-	protected function _c_echo($str)  {
-		echo $str . PHP_EOL;
+	protected function _param($key){
+		return !empty($this->input->get($key))? $this->input->get($key):$this->input->post($key);
 	}
 
-	protected function _log_error($msg, $function = 0, $line = 0){
-		$this->_c_echo('user error :on function ' . $function . ' line ' . $line . ':' . $msg);
-	}
-
+	/**************************** prvate methods ********************************************/
 	private function _load_data(){
 		// 加载电影类型
 		$this->load->Model('Genre_model');
