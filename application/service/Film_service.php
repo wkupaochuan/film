@@ -33,9 +33,9 @@ class Film_service extends MY_Service{
 	 * @param $timestamp
 	 * @return array
 	 */
-	public function get_up_films($timestamp){
+	public function get_up_films($timestamp, $limit = 24){
 		$this->load->model('Film_model');
-		return $this->Film_model->query_by_up_time($timestamp);
+		return $this->Film_model->query_by_up_time($timestamp, $limit);
 	}
 
 	/**
@@ -117,19 +117,32 @@ class Film_service extends MY_Service{
      * @return mixed
      */
     public function get_last_week_hot_films(){
-        $hot_films = array();
+        $ret = array();
         $hot_film_ids = $this->Film_ac_log_model->get_hot_films(time() - 86400*7, time(), 30);
         if(!empty($hot_film_ids)){
             $hot_film_ids = array_column($hot_film_ids, 'film_id');
-            $hot_films = $this->Film_model->get_by_ids($hot_film_ids,
+            $hot_films = $this->Film_model->get_by_ids(
+	            $hot_film_ids,
                 array('id', 'douban_id', 'ch_name', 'l_post_cover', 'b_post_cover', 'douban_post_cover'),
                 array('download_able' => 1)
             );
+
+	        foreach($hot_films as $film){
+		        $hot_films[$film['id']] = $film;
+	        }
+
+	        foreach($hot_film_ids as $film_id){
+		        if(isset($hot_films[$film_id]))  $ret[] = $hot_films[$film_id];
+	        }
         }
 
-        return $hot_films;
+        return $ret;
     }
 
+	/**
+	 * 获取最近热门无资源的内容
+	 * @return mixed
+	 */
 	public function get_hot_and_un_match_films(){
 		$films = $this->Film_ac_log_model->get_hot_and_un_match_films();
 

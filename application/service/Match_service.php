@@ -42,6 +42,7 @@ class Match_service extends MY_Service{
 				$match_res = $this->_match_by_lol_detail($film);
 				f_echo($film['id'] . '-' . $film['url'] . '-' . $film['ch_name'] . '-' . $match_res);
 				$echo_msg[$match_res] = isset($echo_msg[$match_res])? $echo_msg[$match_res]+1:1;
+				if($match_res == 1 && $echo_msg[$match_res]%2 == 0) sleep(1);
 			}
 		}
 
@@ -147,43 +148,61 @@ class Match_service extends MY_Service{
 	 * @return mixed|string
 	 */
 	private function _process_lol_name($name){
+		$name = trim($name);
+		$ret = array();
+
 		// 金刚狼3:殊死一战 => 殊死一战
 		if(strpos($name, ':') !== false){
-			$name = mb_substr($name, mb_strpos($name, ':') + 1);
-			return $name;
+			$ret[] = mb_substr($name, mb_strpos($name, ':') + 1);
+			return $ret;
 		}
 
 		// 逃出克隆岛/神秘岛 => 逃出克隆岛
 		if(strpos($name, '/') !== false){
-			$name = mb_substr($name, 0, mb_strpos($name, '/'));
-			return $name;
+			$ret[] = mb_substr($name, 0, mb_strpos($name, '/'));
+			return $ret;
 		}
 
 		// 新花木兰 => 花木兰
 		if(mb_strpos($name, '新') === 0){
-			$name = mb_substr($name, 1);
-			return $name;
+			$ret[] = mb_substr($name, 1);
+			return $ret;
 		}
 
 		// 铁甲衣2浴血奋战 => 浴血奋战
 		$tmp = explode_by_num($name);
 		if(count($tmp) == 3 && is_numeric($tmp[1])){
-			$name = $tmp[2];
+			$ret[] = $tmp[2];
+			return $ret;
 		}
 
 		// 时间.猎杀者 => 时间·猎杀者
 		if(strpos($name, '.') !== false){
-			$name = str_replace('.', '·', $name);
-			return $name;
+			$ret[] = str_replace('.', '·', $name);
+			return $ret;
 		}
 
 		// (国产) =>
 		if(strpos($name, '(国产)') !== false){
-			$name = str_replace('(国产)', '', $name);
-			return $name;
+			$ret = str_replace('(国产)', '', $name);
+			return $ret;
 		}
 
-		return $name;
+		// 伦敦生活第一季 => 伦敦生活 第一季
+		$pattern = '#第([一二三四五六七八九十]*)季#U';
+		$matches = array();
+		preg_match($pattern, $name, $matches);
+		if(!empty($matches)){
+			$suf = $matches[0];
+			$ret[] = str_replace($suf, ' ' . $suf, $name);
+			if($suf === '第一季'){
+				$ret[] = str_replace($suf, '', $name);
+			}
+
+			return $ret;
+		}
+
+		return $ret;
 	}
 
 	/**
@@ -206,7 +225,7 @@ class Match_service extends MY_Service{
 			!empty($tmp_name) && $search_names[] = $tmp_name;
 		}
 		$search_names[] = trim($lol_film_detail['ch_name']);
-		$search_names[] = trim($this->_process_lol_name($lol_film_detail['ch_name']));
+		$search_names = f_array_append($search_names, $this->_process_lol_name($lol_film_detail['ch_name']));
 
 		$search_res = $this->Film_name_model->search_by_names($search_names);
 		$search_res = array_unique(array_column($search_res, 'film_id'));
@@ -274,10 +293,7 @@ class Match_service extends MY_Service{
 		}
 
 		if($res != 1){
-//			print_r($lol_film_detail);
-//			f_echo($res);
-//			exit;
-			$this->Lol_film_model->incr_un_match_times($lol_film_detail['id']);
+			//$this->Lol_film_model->incr_un_match_times($lol_film_detail['id']);
 		}
 
 		return $res;

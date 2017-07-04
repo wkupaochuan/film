@@ -35,7 +35,7 @@ SQL;
 		return $this->_c_query($sql);
 	}
 
-	function get_by_ids($film_ids, $attrs = array(), $where = array())
+	function get_by_ids($film_ids, $attrs = array(), $where = array(), $order = array())
 	{
 		if(empty($film_ids)) {
 			return array();
@@ -62,6 +62,10 @@ SQL;
             }
         }
 
+		// order
+		if(!empty($order)){
+			$sql .= ' order by ' . $this->_escape($order[0]) . ' ' . $order[1];
+		}
 
 		return $this->_c_query($sql);
 	}
@@ -187,9 +191,9 @@ SQL;
 		return $this->_c_query($sql);
 	}
 
-	public function query_by_up_time($timestamp){
+	public function query_by_up_time($timestamp, $limit = 24){
 		$timestamp = intval($timestamp);
-		$sql = "select * from {$this->_table} where download_able = 1 and up_time >= {$timestamp}";
+		$sql = "select * from {$this->_table} where download_able = 1 and up_time >= {$timestamp} order by up_time desc limit {$limit}";
 		return $this->_c_query($sql);
 	}
 }

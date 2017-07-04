@@ -21,7 +21,7 @@ class Film extends MY_Controller {
             if(!empty($hot_films)){
                 $hot_films = array_slice($hot_films, 0, count($hot_films) - count($hot_films)%6);
             }
-			$search_result = $this->Film_service->get_up_films(strtotime(date('Y-m-d', time() - 86400)));
+			$search_result = $this->Film_service->get_up_films(strtotime(date('Y-m-d', time() - 86400)), 24);
 		}
 
 		if(!empty($search_result)) {

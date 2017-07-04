@@ -91,7 +91,7 @@ class MY_Model extends CI_Model {
 	}
 
 	protected function _c_query($sql){
-		$query = $this->_get_db(self::DB_TYPE_SLAVE)->query($sql);
+		$query = $this->_get_db()->query($sql);
 		return $query->result_array();
 	}
 

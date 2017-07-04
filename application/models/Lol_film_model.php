@@ -35,6 +35,6 @@ class Lol_film_model extends MY_Model {
 	public function incr_un_match_times($lol_film_id){
 		$lol_film_id = intval($lol_film_id);
 		$sql = "update lol_film SET un_match_times = un_match_times + 1 where id = {$lol_film_id}";
-		return $this->_c_query($sql);
+		return $this->_exe_write_sql($sql);
 	}
 }

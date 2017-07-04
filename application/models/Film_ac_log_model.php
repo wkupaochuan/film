@@ -42,7 +42,7 @@ SQL;
 		$sql = <<<SQL
 			select * from (
 			select film_id, SUM(ac_times) as ac_times from film_ac_log where `day` >= {$begin_time} and `day` <= {$end_time}  GROUP BY film_id) as a
-			order by a.ac_times desc limit 0,{$limit}
+			order by a.ac_times desc limit {$limit}
 SQL;
 
 		return $this->_c_query($sql);
