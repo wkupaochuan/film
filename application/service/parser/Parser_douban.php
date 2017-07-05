@@ -10,6 +10,7 @@ class Parser_douban extends Parser_base{
 
 	public function process($douban_id){
 		$html = $this->Crawler_douban->process($douban_id);
+
 		if(empty($html)){
 			return false;
 		}
