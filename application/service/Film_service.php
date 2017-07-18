@@ -69,6 +69,7 @@ class Film_service extends MY_Service{
 		}
 
 		$film_detail['actors'] = str_replace(',', '/', $film_detail['actors']);
+		$film_detail['actors_arr'] = explode('/', $film_detail['actors']);
 		$film_detail['genre'] = str_replace(',', ' / ', $film_detail['genre']);
 		$film_detail['other_names'] = !empty($film_detail['other_names'])? json_decode($film_detail['other_names'], true):array();
 		$film_detail['comments'] = !empty($film_detail['comments'])? json_decode($film_detail['comments'], true):array();

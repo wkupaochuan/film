@@ -15,6 +15,10 @@ class Sitemap extends MY_Controller {
 				));
 			}
 		}
+		$this->_write_sitemap_item($fp, array(
+			'url' => 'http://dyf1024.com',
+			'time' => $stime,
+		));
 		$this->_write_sitemap_footer($fp);
 		fclose($fp);
 	}

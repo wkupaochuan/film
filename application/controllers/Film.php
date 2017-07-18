@@ -48,9 +48,9 @@ class Film extends MY_Controller {
 		$film_detail = $this->Film_service->get_film_detail($id);
 
 		$this->assign('data', array(
-			'title' => "<" . $film_detail['ch_name'] . ">电影迅雷下载 - BT种子下载 - 磁力链接下载",
-			'keywords' => $film_detail['ch_name'] . "迅雷下载," . $film_detail['ch_name'] . "," .$film_detail['ch_name'] . "bt种子下载" ,
-			'description' => "<{$film_detail['ch_name']}>是由" . $film_detail['actors'] . "等主演的电影, 电影饭为广大网友搜集提供" . $film_detail['ch_name'] . "迅雷下载和bt种子下载的资源，仅供学习.提供剧情介绍、豆瓣评分、豆瓣推荐等信息",
+			'title' => $film_detail['ch_name'] . "-下载-迅雷-BT-磁力-电影饭",
+			'keywords' => $film_detail['ch_name'] . "," . $film_detail['or_name'] . ",迅雷,bt种子,磁力下载,电影饭" ,
+			'description' => "<{$film_detail['ch_name']}>是由" . implode('/', array_slice($film_detail['actors_arr'], 0, 3)) . "等主演的电影, 电影饭搜集网络资源, 汇集迅雷、bt、磁力等下载资源，同时收集了评分、热度、短评等信息。",
 			'film_detail' => $film_detail,
 		));
 		$this->display('film_detail.tpl');

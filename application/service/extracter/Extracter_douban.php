@@ -23,7 +23,7 @@ class Extracter_douban extends Extracter_base{
 		}
 
 		// 从远端拉取
-		if($from_remote || !$this->Parser_douban->exist($douban_id)){
+		if(1 || $from_remote || !$this->Parser_douban->exist($douban_id)){
 			$this->Parser_douban->process($douban_id);
 		}
 
