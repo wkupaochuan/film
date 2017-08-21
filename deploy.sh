@@ -6,6 +6,7 @@ excludeCmd=`cat << EXCLUDECMD
 --exclude=application/logs/*.log
 --exclude=application/logs/archive/*
 --exclude=application/data/douban/*
+--exclude=application/data/s80/*
 --exclude=templates_c/
 --exclude=templates_m/
 --exclude=sitemap_index.xml

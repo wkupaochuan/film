@@ -11,6 +11,13 @@ class S80 extends MY_Controller {
 		$this->_craw_and_store($s80_url, $douban_id);
 	}
 
+	public function test($url){
+		$url = str_replace(":", '/', $url);
+		$this->load->service('parser/Parser_s80');
+
+		$this->Parser_s80->detail($url);
+	}
+
 	/************************************************* private methods *************************************************************/
 
 	private function _craw_and_store($url, $douban_id){

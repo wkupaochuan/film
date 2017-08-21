@@ -5,12 +5,31 @@ class Crawler_s80 extends MY_Service{
 		parent::__construct();
 	}
 
+	/**
+	 * 详情页
+	 * @param $film_url
+	 * @return mixed|string
+	 */
 	public function detail($film_url){
 		$html = '';
 		if(empty($film_url)){
 			return $html;
 		}
 		$html = $this->_get_detail_html($film_url);
+
+		return $html;
+	}
+
+	/**
+	 * 下载链接html
+	 */
+	public function bt($bt_url){
+		$html = '';
+		if(empty($bt_url)){
+			return $html;
+		}
+
+		$html = $this->_get_bt_html($bt_url);
 
 		return $html;
 	}
@@ -75,6 +94,34 @@ class Crawler_s80 extends MY_Service{
 		}
 
 		return strpos($html, '<div class="info">') !== false;
+	}
+
+	/**
+	 * 获取下载资源html
+	 * @param $bt_url
+	 * @return mixed|string
+	 */
+	private function _get_bt_html($bt_url){
+		$detail_html = '';
+
+		if(empty($bt_url)){
+			return $detail_html;
+		}
+
+		$bt_url = ltrim($bt_url, '/');
+		$link = "http://www.80s.tw/{$bt_url}";
+		$retry = 1;
+		while($retry--){
+			$html = $this->_request_s80($link);
+			if(strlen($html)) {
+				continue;
+			}else{
+				$detail_html = $html;
+				break;
+			}
+		}
+
+		return $detail_html;
 	}
 
 }

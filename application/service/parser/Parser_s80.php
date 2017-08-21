@@ -9,7 +9,7 @@ class Parser_s80 extends Parser_base{
 	}
 
 	public function detail($s80_url){
-		$html = $this->Crawler_s80->process($s80_url);
+		$html = $this->Crawler_s80->detail($s80_url);
 		if(empty($html)){
 			return false;
 		}
@@ -56,38 +56,31 @@ class Parser_s80 extends Parser_base{
 		$doc = new DOMDocument();
 		@$doc->loadHTML($html);
 
-		// title
-		$title_node = $this->_get_unique_element_by_tag($doc, 'title');
+		// info
+		$info_div_node = get_unique_element_by_class($doc, 'div', 'info');
 
-		// top250
-		$top250_div_node = $this->_get_element_by_class($doc, 'div', 'top250');
+		// recom
+		$recom_ul_node = get_unique_element_by_class($doc, 'ul', 'me1');
 
-		// h1
-		$h1_node = $this->_get_unique_element_by_tag($doc, 'h1');
-
-		// 信息div
-		$info_div_node = $this->_get_element_by_class($doc, 'div', 'subjectwrap clearfix');
-
-		// 简介
-		$summary_div_node = $this->_get_element_by_class($doc, 'div', 'related-info');
-
-		// 影人
-		$celebrities_div_node = $doc->getElementById('celebrities');
-
-		// 图片div
-		$pics_div_node = $doc->getElementById('related-pic');
-
-		// 获奖
-		$award_div_node = $this->_get_element_by_class($doc, 'div', 'mod');
-
-		// 推荐
-		$recom_div_node = $this->_get_element_by_class($doc, 'div', 'recommendations-bd');
-
+		//
 		return array(
-			'head' => array($title_node),
-			'body' => array($top250_div_node, $top250_div_node, $h1_node, $info_div_node, $summary_div_node,
-			$celebrities_div_node, $pics_div_node,  $award_div_node,  $recom_div_node )
+			'head' => array(),
+			'body' => array($info_div_node, $recom_ul_node)
 		);
+	}
+
+	private function _bts($film_url){
+		$bt_url_dic = array(
+			'bt-1', // 电视格式
+			'bd-1', // 平板mp4
+			'hd-1', // 手机mp4
+			'mp4-1', // 小mp4
+		);
+
+		foreach($bt_url_dic as $tmp_url){
+			$tmp_url = $film_url . '/' . $tmp_url;
+			$bt_html = $this->Crawler_s80->bt($tmp_url);
+		}
 	}
 
 }
